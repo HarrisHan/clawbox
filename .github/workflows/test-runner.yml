@@ -1,0 +1,42 @@
+name: Test Self-Hosted Runner
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  test-runner:
+    name: Test Runner
+    runs-on: self-hosted
+    
+    steps:
+    - name: Show system info
+      run: |
+        echo "=== Runner Info ==="
+        uname -a
+        sw_vers
+        echo ""
+        echo "=== Rust Info ==="
+        rustc --version
+        cargo --version
+        echo ""
+        echo "=== Git Info ==="
+        git --version
+        echo ""
+        echo "=== Working Directory ==="
+        pwd
+        ls -la
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Build ClawBox
+      run: cargo build --verbose
+    
+    - name: Run quick test
+      run: cargo test --lib --verbose
+    
+    - name: Success message
+      run: |
+        echo "✅ Self-hosted runner is working!"
+        echo "Runner: ClawBox-MacBookAir"
+        echo "Platform: macOS ARM64"
