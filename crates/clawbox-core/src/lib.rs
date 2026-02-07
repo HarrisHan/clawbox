@@ -27,6 +27,8 @@ pub mod audit;
 pub mod vault;
 pub mod error;
 pub mod sync;
+#[cfg(target_os = "macos")]
+pub mod icloud;
 
 pub use error::{Error, Result};
 pub use vault::ClawBox;

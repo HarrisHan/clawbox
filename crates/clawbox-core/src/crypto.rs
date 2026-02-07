@@ -35,6 +35,19 @@ impl DerivedKey {
     pub(crate) fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
+    
+    /// Create from raw bytes (for sync)
+    pub fn from_bytes(bytes: Vec<u8>) -> Self {
+        let mut key_bytes = [0u8; KEY_LEN];
+        let len = bytes.len().min(KEY_LEN);
+        key_bytes[..len].copy_from_slice(&bytes[..len]);
+        Self { bytes: key_bytes }
+    }
+    
+    /// Export bytes (for sync)
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.bytes.to_vec()
+    }
 }
 
 /// Encrypted data container
