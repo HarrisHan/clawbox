@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use clawbox_core::{AccessLevel, ClawBox, SetOptions};
 use console::style;
+use std::io::{self, BufRead};
 use std::path::PathBuf;
 
 /// ClawBox - AI-Native Secret Manager
@@ -23,6 +24,26 @@ struct Cli {
 
     #[command(subcommand)]
     command: Commands,
+}
+
+/// Get password from various sources
+fn get_password(prompt: &str) -> Result<String> {
+    // 1. Check environment variable
+    if let Ok(pass) = std::env::var("CLAWBOX_PASSWORD") {
+        return Ok(pass);
+    }
+    
+    // 2. Check if stdin is a TTY
+    if atty::is(atty::Stream::Stdin) {
+        // Interactive mode - use rpassword
+        Ok(rpassword::prompt_password(prompt)?)
+    } else {
+        // Non-interactive mode - read from stdin
+        let stdin = io::stdin();
+        let mut line = String::new();
+        stdin.lock().read_line(&mut line)?;
+        Ok(line.trim().to_string())
+    }
 }
 
 #[derive(Subcommand)]
@@ -126,8 +147,8 @@ fn main() -> Result<()> {
             let path = path.unwrap_or(vault_path);
             println!("{} Initializing vault at {:?}", style("◆").cyan(), path);
 
-            let password = rpassword::prompt_password("Enter master password: ")?;
-            let confirm = rpassword::prompt_password("Confirm password: ")?;
+            let password = get_password("Enter master password: ")?;
+            let confirm = get_password("Confirm password: ")?;
 
             if password != confirm {
                 anyhow::bail!("Passwords do not match");
@@ -273,7 +294,7 @@ fn unlock_vault(vault: &mut ClawBox) -> Result<()> {
     }
 
     if !vault.is_unlocked() {
-        let password = rpassword::prompt_password("Enter master password: ")?;
+        let password = get_password("Enter master password: ")?;
         vault.unlock(&password).context("Failed to unlock vault")?;
     }
 

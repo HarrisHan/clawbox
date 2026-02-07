@@ -4,10 +4,9 @@ use crate::{
     crypto::{self, DerivedKey, EncryptedData},
     error::Error,
     storage::{SecretStore, SqliteStore},
-    AccessLevel, Result, SecretInfo, SetOptions,
+    Result, SecretInfo, SetOptions,
 };
 use std::path::{Path, PathBuf};
-use zeroize::Zeroize;
 
 /// Main ClawBox vault
 pub struct ClawBox {
@@ -91,7 +90,7 @@ impl ClawBox {
 
     /// Lock the vault
     pub fn lock(&mut self) {
-        if let Some(mut key) = self.key.take() {
+        if let Some(key) = self.key.take() {
             // Key will be zeroized on drop
             drop(key);
         }

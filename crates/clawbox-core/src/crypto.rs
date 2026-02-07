@@ -9,7 +9,7 @@ use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
 };
-use argon2::{Argon2, PasswordHasher};
+use argon2::Argon2;
 use rand::RngCore;
 use zeroize::Zeroize;
 
