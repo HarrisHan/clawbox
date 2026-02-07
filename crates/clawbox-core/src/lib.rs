@@ -26,6 +26,7 @@ pub mod storage;
 pub mod audit;
 pub mod vault;
 pub mod error;
+pub mod sync;
 
 pub use error::{Error, Result};
 pub use vault::ClawBox;

@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use clawbox_core::{AccessLevel, ClawBox, SetOptions};
 use console::style;
+use serde::{Deserialize, Serialize};
 use std::io::{self, BufRead};
 use std::path::PathBuf;
 
@@ -117,6 +118,30 @@ enum Commands {
         /// Filter by time
         #[arg(long)]
         since: Option<String>,
+    },
+
+    /// Export secrets to file
+    Export {
+        /// Output file path
+        output: PathBuf,
+        /// Format: json, yaml, env
+        #[arg(long, default_value = "json")]
+        format: String,
+        /// Encrypt output
+        #[arg(long)]
+        encrypted: bool,
+    },
+
+    /// Import secrets from file
+    Import {
+        /// Input file path
+        input: PathBuf,
+        /// Format: json, yaml, env
+        #[arg(long, default_value = "json")]
+        format: String,
+        /// Skip existing keys
+        #[arg(long)]
+        skip_existing: bool,
     },
 }
 
@@ -338,6 +363,137 @@ fn main() -> Result<()> {
                 
                 println!("\nTotal: {} entries", count);
             }
+        }
+
+        Commands::Export { output, format, encrypted } => {
+            let mut vault = ClawBox::open(&vault_path)?;
+            unlock_vault(&mut vault)?;
+            
+            let secrets = vault.list(None)?;
+            
+            #[derive(serde::Serialize)]
+            struct ExportSecret {
+                path: String,
+                value: String,
+                access: String,
+                tags: Vec<String>,
+                note: Option<String>,
+            }
+            
+            let mut export_data: Vec<ExportSecret> = vec![];
+            
+            for secret in secrets {
+                if let Some(value) = vault.get(&secret.path)? {
+                    export_data.push(ExportSecret {
+                        path: secret.path.clone(),
+                        value,
+                        access: format!("{:?}", secret.access),
+                        tags: secret.tags.clone(),
+                        note: secret.note.clone(),
+                    });
+                }
+            }
+            
+            let content = match format.as_str() {
+                "json" => serde_json::to_string_pretty(&export_data)?,
+                "env" => {
+                    let mut env = String::new();
+                    for s in &export_data {
+                        let key = s.path.replace("/", "_").to_uppercase();
+                        env.push_str(&format!("{}=\"{}\"\n", key, s.value.replace("\"", "\\\"")));
+                    }
+                    env
+                }
+                "yaml" => {
+                    let mut yaml = String::from("# ClawBox Export\n");
+                    for s in &export_data {
+                        yaml.push_str(&format!("{}:\n  value: \"{}\"\n", s.path, s.value));
+                    }
+                    yaml
+                }
+                _ => anyhow::bail!("Unsupported format: {}", format),
+            };
+            
+            if encrypted {
+                // TODO: Implement encrypted export
+                anyhow::bail!("Encrypted export not yet implemented");
+            }
+            
+            std::fs::write(&output, content)?;
+            println!("{} Exported {} secrets to {:?}", 
+                style("✓").green(), export_data.len(), output);
+        }
+
+        Commands::Import { input, format, skip_existing } => {
+            let mut vault = ClawBox::open(&vault_path)?;
+            unlock_vault(&mut vault)?;
+            
+            let content = std::fs::read_to_string(&input)?;
+            
+            #[derive(serde::Deserialize)]
+            struct ImportSecret {
+                path: String,
+                value: String,
+                #[serde(default)]
+                access: Option<String>,
+                #[serde(default)]
+                tags: Option<Vec<String>>,
+                #[serde(default)]
+                note: Option<String>,
+            }
+            
+            let secrets: Vec<ImportSecret> = match format.as_str() {
+                "json" => serde_json::from_str(&content)?,
+                "env" => {
+                    let mut secrets = vec![];
+                    for line in content.lines() {
+                        let line = line.trim();
+                        if line.is_empty() || line.starts_with('#') {
+                            continue;
+                        }
+                        if let Some((key, value)) = line.split_once('=') {
+                            let path = key.trim().to_lowercase().replace("_", "/");
+                            let value = value.trim().trim_matches('"').to_string();
+                            secrets.push(ImportSecret {
+                                path,
+                                value,
+                                access: None,
+                                tags: None,
+                                note: None,
+                            });
+                        }
+                    }
+                    secrets
+                }
+                _ => anyhow::bail!("Unsupported format: {}", format),
+            };
+            
+            let mut imported = 0;
+            let mut skipped = 0;
+            
+            for secret in secrets {
+                if skip_existing {
+                    if vault.get(&secret.path)?.is_some() {
+                        skipped += 1;
+                        continue;
+                    }
+                }
+                
+                let opts = SetOptions {
+                    access: secret.access.as_ref()
+                        .map(|a| parse_access_level(a))
+                        .unwrap_or_default(),
+                    tags: secret.tags.unwrap_or_default(),
+                    note: secret.note,
+                    ..Default::default()
+                };
+                
+                vault.set(&secret.path, &secret.value, opts)?;
+                imported += 1;
+            }
+            
+            println!("{} Imported {} secrets ({} skipped)", 
+                style("✓").green(), imported, skipped);
         }
     }
 
