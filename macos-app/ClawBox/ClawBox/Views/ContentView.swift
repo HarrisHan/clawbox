@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  ClawBox
 //
-//  Main content view
+//  Modern UI inspired by 1Password/Bitwarden
 //
 
 import SwiftUI
@@ -23,7 +23,7 @@ struct ContentView: View {
                 ErrorView(message: message)
             }
         }
-        .frame(minWidth: 600, minHeight: 400)
+        .frame(minWidth: 800, minHeight: 500)
     }
 }
 
@@ -37,46 +37,79 @@ struct InitializeView: View {
     @State private var errorMessage: String?
     
     var body: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "lock.shield")
-                .font(.system(size: 64))
-                .foregroundColor(.accentColor)
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [Color(hex: "1a1a2e"), Color(hex: "16213e")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            Text("Welcome to ClawBox")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            Text("Create a new vault to get started")
-                .foregroundColor(.secondary)
-            
-            VStack(spacing: 16) {
-                SecureField("Master Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 300)
-                
-                SecureField("Confirm Password", text: $confirmPassword)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 300)
-                
-                if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
+            VStack(spacing: 32) {
+                // Logo
+                VStack(spacing: 16) {
+                    Image(systemName: "lock.shield.fill")
+                        .font(.system(size: 80))
+                        .foregroundStyle(
+                            LinearGradient(colors: [.cyan, .blue], startPoint: .top, endPoint: .bottom)
+                        )
+                    
+                    Text("ClawBox")
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    Text("AI-Native Secret Manager")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
                 }
                 
-                Button(action: initialize) {
-                    if isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    } else {
-                        Text("Create Vault")
+                // Form
+                VStack(spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Create Master Password")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        SecureField("", text: $password)
+                            .textFieldStyle(ModernTextFieldStyle())
+                            .frame(width: 320)
                     }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Confirm Password")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        SecureField("", text: $confirmPassword)
+                            .textFieldStyle(ModernTextFieldStyle())
+                            .frame(width: 320)
+                    }
+                    
+                    if let error = errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                    
+                    Button(action: initialize) {
+                        HStack {
+                            if isLoading {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .tint(.white)
+                            }
+                            Text("Create Vault")
+                                .fontWeight(.semibold)
+                        }
+                        .frame(width: 320, height: 44)
+                    }
+                    .buttonStyle(ModernButtonStyle())
+                    .disabled(password.isEmpty || password != confirmPassword || isLoading)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(password.isEmpty || password != confirmPassword || isLoading)
             }
+            .padding(60)
         }
-        .padding(40)
     }
     
     private func initialize() {
@@ -108,57 +141,80 @@ struct UnlockView: View {
     @State private var errorMessage: String?
     
     var body: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "lock.fill")
-                .font(.system(size: 64))
-                .foregroundColor(.accentColor)
+        ZStack {
+            // Background
+            LinearGradient(
+                colors: [Color(hex: "1a1a2e"), Color(hex: "16213e")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            Text("ClawBox is Locked")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
-            VStack(spacing: 16) {
-                // Biometric unlock button
-                if vaultManager.biometricEnabled && vaultManager.biometricAvailable {
-                    Button(action: unlockWithBiometrics) {
-                        HStack {
-                            Image(systemName: "touchid")
-                            Text("Unlock with \(vaultManager.biometricTypeName)")
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isLoading)
+            VStack(spacing: 32) {
+                // Logo
+                VStack(spacing: 16) {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(.cyan)
                     
-                    Text("or")
-                        .foregroundColor(.secondary)
+                    Text("ClawBox")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    Text("Vault is locked")
+                        .foregroundColor(.gray)
                 }
                 
-                SecureField("Master Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 300)
-                    .onSubmit { unlock() }
-                
-                if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                }
-                
-                Button(action: unlock) {
-                    if isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    } else {
-                        Text("Unlock")
+                // Unlock form
+                VStack(spacing: 20) {
+                    // Biometric button
+                    if vaultManager.biometricEnabled && vaultManager.biometricAvailable {
+                        Button(action: unlockWithBiometrics) {
+                            HStack {
+                                Image(systemName: "touchid")
+                                    .font(.title2)
+                                Text("Unlock with \(vaultManager.biometricTypeName)")
+                            }
+                            .frame(width: 320, height: 44)
+                        }
+                        .buttonStyle(ModernButtonStyle())
+                        .disabled(isLoading)
+                        
+                        Text("or enter password")
+                            .foregroundColor(.gray)
+                            .font(.caption)
                     }
+                    
+                    SecureField("Master Password", text: $password)
+                        .textFieldStyle(ModernTextFieldStyle())
+                        .frame(width: 320)
+                        .onSubmit { unlock() }
+                    
+                    if let error = errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                    
+                    Button(action: unlock) {
+                        HStack {
+                            if isLoading {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .tint(.white)
+                            }
+                            Text("Unlock")
+                                .fontWeight(.semibold)
+                        }
+                        .frame(width: 320, height: 44)
+                    }
+                    .buttonStyle(ModernSecondaryButtonStyle())
+                    .disabled(password.isEmpty || isLoading)
                 }
-                .buttonStyle(.bordered)
-                .disabled(password.isEmpty || isLoading)
             }
+            .padding(60)
         }
-        .padding(40)
         .onAppear {
-            // Auto-trigger biometric if enabled
             if vaultManager.biometricEnabled && vaultManager.biometricAvailable {
                 unlockWithBiometrics()
             }
@@ -201,47 +257,115 @@ struct MainView: View {
     @State private var searchText = ""
     @State private var selectedSecret: SecretEntry?
     @State private var showingAddSheet = false
+    @State private var selectedCategory: String? = nil
+    
+    var categories: [String] {
+        let paths = vaultManager.secrets.map { $0.path.split(separator: "/").first.map(String.init) ?? "Other" }
+        return Array(Set(paths)).sorted()
+    }
     
     var filteredSecrets: [SecretEntry] {
-        if searchText.isEmpty {
-            return vaultManager.secrets
+        var result = vaultManager.secrets
+        
+        if let category = selectedCategory {
+            result = result.filter { $0.path.hasPrefix(category + "/") || $0.path == category }
         }
-        return vaultManager.secrets.filter { $0.path.localizedCaseInsensitiveContains(searchText) }
+        
+        if !searchText.isEmpty {
+            result = result.filter { $0.path.localizedCaseInsensitiveContains(searchText) }
+        }
+        
+        return result
     }
     
     var body: some View {
         NavigationSplitView {
-            VStack {
-                List(filteredSecrets, selection: $selectedSecret) { secret in
-                    SecretRow(secret: secret)
-                        .tag(secret)
+            // Sidebar
+            VStack(spacing: 0) {
+                // Search
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    TextField("Search", text: $searchText)
+                        .textFieldStyle(.plain)
                 }
-                .searchable(text: $searchText, prompt: "Search secrets...")
-            }
-            .navigationTitle("Secrets")
-            .toolbar {
-                ToolbarItem {
-                    Button(action: { showingAddSheet = true }) {
-                        Image(systemName: "plus")
+                .padding(10)
+                .background(Color(NSColor.controlBackgroundColor))
+                .cornerRadius(8)
+                .padding()
+                
+                // Categories
+                List(selection: $selectedCategory) {
+                    Section("Categories") {
+                        Button(action: { selectedCategory = nil }) {
+                            Label("All Items", systemImage: "tray.full.fill")
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(selectedCategory == nil ? Color.accentColor.opacity(0.2) : Color.clear)
+                        
+                        ForEach(categories, id: \.self) { category in
+                            Button(action: { selectedCategory = category }) {
+                                Label(category.capitalized, systemImage: categoryIcon(for: category))
+                            }
+                            .buttonStyle(.plain)
+                            .listRowBackground(selectedCategory == category ? Color.accentColor.opacity(0.2) : Color.clear)
+                        }
                     }
                 }
-                ToolbarItem {
+                .listStyle(.sidebar)
+            }
+            .frame(minWidth: 200)
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
                     Button(action: { vaultManager.lock() }) {
                         Image(systemName: "lock.fill")
                     }
                     .help("Lock Vault")
                 }
             }
+        } content: {
+            // Secret list
+            List(filteredSecrets, selection: $selectedSecret) { secret in
+                SecretRow(secret: secret)
+                    .tag(secret)
+            }
+            .listStyle(.inset)
+            .frame(minWidth: 250)
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    Button(action: { showingAddSheet = true }) {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
         } detail: {
+            // Detail view
             if let secret = selectedSecret {
                 SecretDetailView(secret: secret)
             } else {
-                Text("Select a secret")
-                    .foregroundColor(.secondary)
+                VStack {
+                    Image(systemName: "key.fill")
+                        .font(.system(size: 48))
+                        .foregroundColor(.gray.opacity(0.5))
+                    Text("Select a secret")
+                        .foregroundColor(.gray)
+                }
             }
         }
         .sheet(isPresented: $showingAddSheet) {
             AddSecretSheet()
+        }
+    }
+    
+    private func categoryIcon(for category: String) -> String {
+        switch category.lowercased() {
+        case "github": return "chevron.left.forwardslash.chevron.right"
+        case "aws": return "cloud.fill"
+        case "google": return "g.circle.fill"
+        case "api": return "network"
+        case "ssh": return "terminal.fill"
+        case "database", "db": return "cylinder.fill"
+        default: return "folder.fill"
         }
     }
 }
@@ -252,21 +376,37 @@ struct SecretRow: View {
     let secret: SecretEntry
     
     var body: some View {
-        HStack {
-            Text(secret.accessLevel.icon)
+        HStack(spacing: 12) {
+            // Icon
+            Image(systemName: secret.accessLevel.icon)
+                .font(.title3)
+                .foregroundColor(accessColor)
+                .frame(width: 32)
             
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(secret.path)
+                    .font(.system(.body, design: .monospaced))
                     .fontWeight(.medium)
                 
                 if !secret.tags.isEmpty {
-                    Text(secret.tags.joined(separator: ", "))
+                    Text(secret.tags.joined(separator: " · "))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
+            
+            Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
+    }
+    
+    var accessColor: Color {
+        switch secret.accessLevel {
+        case .public: return .green
+        case .normal: return .blue
+        case .sensitive: return .orange
+        case .critical: return .red
+        }
     }
 }
 
@@ -276,56 +416,122 @@ struct SecretDetailView: View {
     @EnvironmentObject var vaultManager: VaultManager
     let secret: SecretEntry
     
-    @State private var value: String = "••••••••"
+    @State private var value: String = ""
     @State private var isRevealed = false
     @State private var isLoading = false
+    @State private var copied = false
     
     var body: some View {
-        Form {
-            Section("Secret") {
-                LabeledContent("Path") {
-                    Text(secret.path)
-                        .textSelection(.enabled)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Header
+                HStack {
+                    Image(systemName: secret.accessLevel.icon)
+                        .font(.title)
+                        .foregroundColor(accessColor)
+                    
+                    VStack(alignment: .leading) {
+                        Text(secret.path)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        
+                        Text(secret.accessLevel.rawValue.capitalized)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
                 }
                 
-                LabeledContent("Value") {
+                Divider()
+                
+                // Value section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("SECRET VALUE")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fontWeight(.semibold)
+                    
                     HStack {
-                        Text(isRevealed ? value : "••••••••")
-                            .textSelection(.enabled)
-                            .font(.system(.body, design: .monospaced))
-                        
-                        Button(action: toggleReveal) {
-                            Image(systemName: isRevealed ? "eye.slash" : "eye")
+                        if isRevealed {
+                            Text(value)
+                                .font(.system(.body, design: .monospaced))
+                                .textSelection(.enabled)
+                        } else {
+                            Text("••••••••••••••••")
+                                .font(.system(.body, design: .monospaced))
+                                .foregroundColor(.secondary)
                         }
-                        .buttonStyle(.plain)
                         
-                        Button(action: copyValue) {
-                            Image(systemName: "doc.on.doc")
+                        Spacer()
+                        
+                        HStack(spacing: 8) {
+                            Button(action: toggleReveal) {
+                                Image(systemName: isRevealed ? "eye.slash" : "eye")
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundColor(.secondary)
+                            
+                            Button(action: copyValue) {
+                                Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundColor(copied ? .green : .secondary)
                         }
-                        .buttonStyle(.plain)
+                    }
+                    .padding()
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .cornerRadius(8)
+                }
+                
+                // Tags
+                if !secret.tags.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("TAGS")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fontWeight(.semibold)
+                        
+                        HStack {
+                            ForEach(secret.tags, id: \.self) { tag in
+                                Text(tag)
+                                    .font(.caption)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.accentColor.opacity(0.2))
+                                    .cornerRadius(4)
+                            }
+                        }
                     }
                 }
                 
-                LabeledContent("Access Level") {
-                    Text("\(secret.accessLevel.icon) \(secret.accessLevel.rawValue.capitalized)")
+                Spacer()
+                
+                // Delete button
+                Button(role: .destructive, action: deleteSecret) {
+                    Label("Delete Secret", systemImage: "trash")
                 }
+                .buttonStyle(.plain)
+                .foregroundColor(.red)
             }
-            
-            Section {
-                Button("Delete Secret", role: .destructive) {
-                    deleteSecret()
-                }
-            }
+            .padding(24)
         }
-        .formStyle(.grouped)
-        .padding()
-        .navigationTitle(secret.path)
+        .frame(minWidth: 300)
+    }
+    
+    var accessColor: Color {
+        switch secret.accessLevel {
+        case .public: return .green
+        case .normal: return .blue
+        case .sensitive: return .orange
+        case .critical: return .red
+        }
     }
     
     private func toggleReveal() {
         if isRevealed {
             isRevealed = false
-            value = "••••••••"
+            value = ""
         } else {
             isLoading = true
             Task {
@@ -346,9 +552,15 @@ struct SecretDetailView: View {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(val, forType: .string)
             
+            copied = true
+            
             // Clear after 30 seconds
             DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
                 NSPasteboard.general.clearContents()
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                copied = false
             }
         }
     }
@@ -373,20 +585,52 @@ struct AddSecretSheet: View {
     @State private var errorMessage: String?
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Add Secret")
-                .font(.headline)
+        VStack(spacing: 24) {
+            // Header
+            HStack {
+                Text("Add Secret")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                Spacer()
+                Button(action: { dismiss() }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
             
-            Form {
-                TextField("Path (e.g., github/token)", text: $path)
-                SecureField("Value", text: $value)
-                Picker("Access Level", selection: $accessLevel) {
-                    ForEach(SecretEntry.AccessLevel.allCases, id: \.self) { level in
-                        Text("\(level.icon) \(level.rawValue.capitalized)").tag(level)
+            // Form
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Path")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    TextField("e.g., github/token", text: $path)
+                        .textFieldStyle(.roundedBorder)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Value")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    SecureField("Secret value", text: $value)
+                        .textFieldStyle(.roundedBorder)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Access Level")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Picker("", selection: $accessLevel) {
+                        ForEach(SecretEntry.AccessLevel.allCases, id: \.self) { level in
+                            Label(level.rawValue.capitalized, systemImage: level.icon)
+                                .tag(level)
+                        }
                     }
+                    .pickerStyle(.segmented)
                 }
             }
-            .formStyle(.grouped)
             
             if let error = errorMessage {
                 Text(error)
@@ -394,11 +638,14 @@ struct AddSecretSheet: View {
                     .font(.caption)
             }
             
+            // Actions
             HStack {
                 Button("Cancel") {
                     dismiss()
                 }
                 .keyboardShortcut(.escape)
+                
+                Spacer()
                 
                 Button("Save") {
                     save()
@@ -408,7 +655,7 @@ struct AddSecretSheet: View {
                 .keyboardShortcut(.return)
             }
         }
-        .padding()
+        .padding(24)
         .frame(width: 400)
     }
     
@@ -434,10 +681,14 @@ struct MenuBarView: View {
     @EnvironmentObject var vaultManager: VaultManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             if vaultManager.isUnlocked {
-                Text("🔓 Vault Unlocked")
-                    .font(.headline)
+                HStack {
+                    Image(systemName: "lock.open.fill")
+                        .foregroundColor(.green)
+                    Text("Unlocked")
+                        .fontWeight(.medium)
+                }
                 
                 Divider()
                 
@@ -447,7 +698,11 @@ struct MenuBarView: View {
                 
                 ForEach(vaultManager.secrets.prefix(5)) { secret in
                     Button(action: { copySecret(secret.path) }) {
-                        Text(secret.path)
+                        HStack {
+                            Image(systemName: "key.fill")
+                            Text(secret.path)
+                                .lineLimit(1)
+                        }
                     }
                     .buttonStyle(.plain)
                 }
@@ -458,8 +713,16 @@ struct MenuBarView: View {
                     vaultManager.lock()
                 }
             } else {
-                Text("🔒 Vault Locked")
-                    .font(.headline)
+                HStack {
+                    Image(systemName: "lock.fill")
+                        .foregroundColor(.red)
+                    Text("Locked")
+                        .fontWeight(.medium)
+                }
+                
+                Text("Open ClawBox to unlock")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
             
             Divider()
@@ -469,7 +732,7 @@ struct MenuBarView: View {
             }
         }
         .padding()
-        .frame(width: 200)
+        .frame(width: 220)
     }
     
     private func copySecret(_ path: String) {
@@ -488,7 +751,7 @@ struct ErrorView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle")
+            Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
                 .foregroundColor(.red)
             
@@ -497,8 +760,75 @@ struct ErrorView: View {
             
             Text(message)
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
         }
         .padding()
+    }
+}
+
+// MARK: - Custom Styles
+
+struct ModernTextFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .padding(12)
+            .background(Color.white.opacity(0.1))
+            .cornerRadius(10)
+            .foregroundColor(.white)
+    }
+}
+
+struct ModernButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                LinearGradient(colors: [.cyan, .blue], startPoint: .leading, endPoint: .trailing)
+            )
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
+struct ModernSecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(Color.white.opacity(0.1))
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
+// MARK: - Color Extension
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }
 

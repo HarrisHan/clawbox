@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 /// Secret entry model
-struct SecretEntry: Identifiable, Codable {
+struct SecretEntry: Identifiable, Codable, Hashable {
     let id: String
     let path: String
     var value: String?
@@ -19,7 +19,7 @@ struct SecretEntry: Identifiable, Codable {
     let createdAt: Date
     let updatedAt: Date
     
-    enum AccessLevel: String, Codable, CaseIterable {
+    enum AccessLevel: String, Codable, CaseIterable, Hashable {
         case `public` = "public"
         case normal = "normal"
         case sensitive = "sensitive"
@@ -27,12 +27,30 @@ struct SecretEntry: Identifiable, Codable {
         
         var icon: String {
             switch self {
-            case .public: return "🔓"
-            case .normal: return "🔑"
-            case .sensitive: return "🔐"
-            case .critical: return "🔒"
+            case .public: return "globe"
+            case .normal: return "key.fill"
+            case .sensitive: return "lock.fill"
+            case .critical: return "exclamationmark.lock.fill"
             }
         }
+        
+        var color: String {
+            switch self {
+            case .public: return "green"
+            case .normal: return "blue"
+            case .sensitive: return "orange"
+            case .critical: return "red"
+            }
+        }
+    }
+    
+    // Hashable conformance
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: SecretEntry, rhs: SecretEntry) -> Bool {
+        lhs.id == rhs.id
     }
 }
 
@@ -72,11 +90,16 @@ class VaultManager: ObservableObject {
         
         // Find clawbox binary
         self.clawboxPath = "/usr/local/bin/clawbox"
-        if !FileManager.default.fileExists(atPath: clawboxPath) {
-            // Try homebrew path
-            let brewPath = "/opt/homebrew/bin/clawbox"
-            if FileManager.default.fileExists(atPath: brewPath) {
-                self.clawboxPath = brewPath
+        let possiblePaths = [
+            "/usr/local/bin/clawbox",
+            "/opt/homebrew/bin/clawbox",
+            home.appendingPathComponent("Desktop/projects/clawbox/target/release/clawbox").path
+        ]
+        
+        for path in possiblePaths {
+            if FileManager.default.fileExists(atPath: path) {
+                self.clawboxPath = path
+                break
             }
         }
         
@@ -179,7 +202,7 @@ class VaultManager: ObservableObject {
     var biometricTypeName: String {
         biometricAuth.biometricTypeName
     }
-    
+
     /// Load secrets list
     func loadSecrets() async throws {
         guard isUnlocked else { return }
