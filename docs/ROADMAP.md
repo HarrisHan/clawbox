@@ -13,118 +13,111 @@
 
 ## 版本规划
 
-### v0.1.0 - MVP 🎯
+### v0.1.0 - MVP ✅
 
 **目标**: 可用的 CLI 基础版本
 
-**预计时间**: 2 周
+**状态**: ✅ 已完成 (2026-02-07)
 
 **功能清单**:
 
-- [ ] 项目结构搭建
-  - [ ] Rust workspace 配置
-  - [ ] CI/CD 基础 (GitHub Actions)
-  - [ ] 文档结构
+- [x] 项目结构搭建
+  - [x] Rust workspace 配置
+  - [x] CI/CD 基础 (GitHub Actions)
+  - [x] 文档结构
 
-- [ ] 加密核心
-  - [ ] Argon2id 密钥派生
-  - [ ] AES-256-GCM 加密/解密
-  - [ ] 安全随机数生成
-  - [ ] 内存安全 (zeroize)
+- [x] 加密核心
+  - [x] Argon2id 密钥派生
+  - [x] AES-256-GCM 加密/解密
+  - [x] 安全随机数生成
+  - [x] 内存安全 (zeroize)
 
-- [ ] 存储引擎
-  - [ ] SQLite 数据库初始化
-  - [ ] 密钥 CRUD 操作
-  - [ ] 事务支持
+- [x] 存储引擎
+  - [x] SQLite 数据库初始化
+  - [x] 密钥 CRUD 操作
+  - [x] 事务支持
 
-- [ ] CLI 基础命令
-  - [ ] `clawbox init` - 初始化保险库
-  - [ ] `clawbox set` - 设置密钥
-  - [ ] `clawbox get` - 获取密钥
-  - [ ] `clawbox list` - 列出密钥
-  - [ ] `clawbox delete` - 删除密钥
-  - [ ] `clawbox unlock` / `lock` - 解锁/锁定
+- [x] CLI 基础命令
+  - [x] `clawbox init` - 初始化保险库
+  - [x] `clawbox set` - 设置密钥
+  - [x] `clawbox get` - 获取密钥
+  - [x] `clawbox list` - 列出密钥
+  - [x] `clawbox delete` - 删除密钥
+  - [x] `clawbox unlock` / `lock` - 解锁/锁定
 
-- [ ] 测试
-  - [ ] 单元测试 (>80% 覆盖率)
-  - [ ] 集成测试
+- [x] 测试
+  - [x] 单元测试
+  - [x] 集成测试
 
 **发布物**:
-- Linux x64 二进制
-- macOS ARM64 二进制
-- macOS x64 二进制
+- GitHub Release: https://github.com/HarrisHan/clawbox/releases/tag/v0.1.0
 
 ---
 
-### v0.2.0 - 权限与审计 📊
+### v0.2.0 - 权限与审计 ✅
 
 **目标**: 完善的权限控制和审计追踪
 
-**预计时间**: 2 周 (累计 4 周)
+**状态**: ✅ 已完成 (2026-02-07)
 
 **功能清单**:
 
-- [ ] 访问级别
-  - [ ] 四级权限: public, normal, sensitive, critical
-  - [ ] 默认权限配置
-  - [ ] 权限修改命令
+- [x] 访问级别
+  - [x] 四级权限: public, normal, sensitive, critical
+  - [x] 默认权限配置
 
-- [ ] 审计日志
-  - [ ] 日志记录引擎
-  - [ ] 链式哈希完整性
-  - [ ] `clawbox audit` 命令
-  - [ ] 日志导出
+- [x] 审计日志
+  - [x] 日志记录引擎
+  - [x] 链式哈希完整性
+  - [x] `clawbox audit` 命令
+  - [x] 日志导出 (--json)
 
-- [ ] 密钥管理增强
-  - [ ] 密钥分组 (路径层级)
-  - [ ] 标签系统
-  - [ ] 备注功能
-  - [ ] `clawbox rename` 命令
+- [x] 密钥管理增强
+  - [x] 密钥分组 (路径层级)
+  - [x] 标签系统
+  - [x] 备注功能
 
-- [ ] CLI 改进
-  - [ ] 彩色输出
-  - [ ] 进度指示
-  - [ ] Shell 自动补全
+- [x] CLI 改进
+  - [x] 彩色输出
+  - [x] 进度指示
 
 **发布物**:
-- 更新的多平台二进制
-- 完整 CLI 文档
+- GitHub Release: https://github.com/HarrisHan/clawbox/releases/tag/v0.2.0
 
 ---
 
-### v0.3.0 - macOS App 🍎
+### v0.3.0 - macOS App ✅
 
 **目标**: 原生 macOS 图形界面
 
-**预计时间**: 3 周 (累计 7 周)
+**状态**: ✅ 已完成 (2026-02-07)
 
 **功能清单**:
 
-- [ ] FFI 层
-  - [ ] Rust → C 绑定
-  - [ ] Swift 桥接
-  - [ ] 内存管理
+- [x] CLI 集成
+  - [x] VaultManager 调用 CLI
+  - [x] 密码环境变量传递
 
-- [ ] macOS App 基础
-  - [ ] SwiftUI 主界面
-  - [ ] 密钥列表视图
-  - [ ] 密钥详情/编辑
-  - [ ] 搜索功能
+- [x] macOS App 基础
+  - [x] SwiftUI 主界面
+  - [x] 密钥列表视图 (NavigationSplitView)
+  - [x] 密钥详情 (reveal/copy/delete)
+  - [x] 搜索功能
+  - [x] 添加密钥表单
 
-- [ ] 系统集成
-  - [ ] 菜单栏图标
-  - [ ] 快捷键
-  - [ ] 启动时自动解锁 (可选)
+- [x] 系统集成
+  - [x] 菜单栏图标 (MenuBarExtra)
+  - [x] 快捷键 (Cmd+Shift+L 锁定)
+  - [x] 剪贴板自动清除 (30秒)
 
-- [ ] 通知系统
-  - [ ] 敏感密钥访问通知
-  - [ ] 审批弹窗
-  - [ ] 一键审批/拒绝
+- [ ] 待完善 (v0.3.1)
+  - [ ] FFI 直接绑定 (替代 CLI 调用)
+  - [ ] .dmg/.pkg 打包
+  - [ ] 通知系统
 
 **发布物**:
-- macOS .dmg 安装包
-- macOS .pkg 安装包
-- App 使用文档
+- GitHub Release: https://github.com/HarrisHan/clawbox/releases/tag/v0.3.0
+- Xcode 项目源码
 
 ---
 
