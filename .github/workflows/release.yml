@@ -10,20 +10,13 @@ permissions:
 
 jobs:
   build:
-    name: Build ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
+    name: Build macOS ARM64
+    runs-on: self-hosted  # Use self-hosted Mac runner
     strategy:
       matrix:
         include:
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            artifact: clawbox-x86_64-apple-darwin
-          - os: macos-latest
-            target: aarch64-apple-darwin
+          - target: aarch64-apple-darwin
             artifact: clawbox-aarch64-apple-darwin
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            artifact: clawbox-x86_64-unknown-linux-gnu
     
     steps:
     - uses: actions/checkout@v4
@@ -52,7 +45,7 @@ jobs:
   release:
     name: Create Release
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
     - uses: actions/checkout@v4
     
