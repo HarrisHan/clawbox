@@ -7,13 +7,16 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   width: 320px;
-  min-height: 400px;
+  min-height: 420px;
   background: #1a1a2e;
   color: #eee;
 }
 
 .container {
   padding: 16px;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
 }
 
 header {
@@ -41,26 +44,57 @@ header h1 {
 
 .status.locked { color: #ff6b6b; }
 .status.unlocked { color: #4ecdc4; }
+.status.new { color: #ffd93d; }
 
 .view {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1;
 }
 
 .view.hidden {
   display: none;
 }
 
+.welcome {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.welcome .icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.welcome h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.welcome p {
+  color: #888;
+  font-size: 13px;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 13px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
 input[type="text"],
 input[type="password"] {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid #333;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #16213e;
   color: #eee;
   font-size: 14px;
+  transition: border-color 0.2s;
 }
 
 input:focus {
@@ -68,11 +102,16 @@ input:focus {
   border-color: #4ecdc4;
 }
 
+input::placeholder {
+  color: #666;
+}
+
 .btn {
-  padding: 10px 16px;
+  padding: 12px 16px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -99,47 +138,82 @@ input:focus {
   color: #ff6b6b;
   font-size: 12px;
   text-align: center;
+  min-height: 16px;
 }
 
 #secrets-list {
   list-style: none;
-  max-height: 250px;
+  flex: 1;
+  max-height: 220px;
   overflow-y: auto;
 }
 
 #secrets-list li {
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: #16213e;
-  border-radius: 6px;
+  border-radius: 8px;
   margin-bottom: 8px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 #secrets-list li:hover {
   background: #1f3460;
+  transform: translateX(2px);
 }
 
-#secrets-list li .path {
-  font-family: monospace;
+#secrets-list li.empty {
+  color: #666;
+  text-align: center;
+  cursor: default;
   font-size: 13px;
 }
 
-#secrets-list li .copy-btn {
+#secrets-list li.empty:hover {
+  background: #16213e;
+  transform: none;
+}
+
+#secrets-list li .path {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 13px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#secrets-list li .actions {
+  display: flex;
+  gap: 8px;
+}
+
+#secrets-list li .actions button {
   background: transparent;
   border: none;
-  color: #4ecdc4;
+  color: #888;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+#secrets-list li .actions button:hover {
+  color: #4ecdc4;
+}
+
+#secrets-list li .actions .delete-btn:hover {
+  color: #ff6b6b;
 }
 
 .actions {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .actions .btn {
@@ -168,6 +242,34 @@ h2 {
   margin-bottom: 8px;
 }
 
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  animation: fadeIn 0.2s ease;
+  z-index: 100;
+}
+
+.toast.success {
+  background: #4ecdc4;
+  color: #1a1a2e;
+}
+
+.toast.error {
+  background: #ff6b6b;
+  color: #fff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -175,9 +277,14 @@ h2 {
 
 ::-webkit-scrollbar-track {
   background: #16213e;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #333;
   border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
 }

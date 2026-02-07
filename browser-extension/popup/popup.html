@@ -14,9 +14,22 @@
       <span id="status" class="status locked">🔒</span>
     </header>
 
+    <!-- Initialize View -->
+    <div id="init-view" class="view hidden">
+      <div class="welcome">
+        <span class="icon">🔐</span>
+        <h2>Welcome to ClawBox</h2>
+        <p>Create a master password to get started</p>
+      </div>
+      <input type="password" id="init-password" placeholder="Master Password (8+ chars)" autofocus>
+      <input type="password" id="init-confirm" placeholder="Confirm Password">
+      <button id="init-btn" class="btn primary">Create Vault</button>
+      <p id="init-error" class="error"></p>
+    </div>
+
     <!-- Unlock View -->
-    <div id="unlock-view" class="view">
-      <p>Enter master password to unlock</p>
+    <div id="unlock-view" class="view hidden">
+      <p class="subtitle">Enter master password to unlock</p>
       <input type="password" id="password" placeholder="Master Password" autofocus>
       <button id="unlock-btn" class="btn primary">Unlock</button>
       <p id="error-msg" class="error"></p>
@@ -27,7 +40,7 @@
       <input type="text" id="search" placeholder="🔍 Search secrets...">
       <ul id="secrets-list"></ul>
       <div class="actions">
-        <button id="lock-btn" class="btn">Lock</button>
+        <button id="lock-btn" class="btn">🔒 Lock</button>
         <button id="add-btn" class="btn primary">+ Add</button>
       </div>
     </div>
@@ -36,7 +49,7 @@
     <div id="add-view" class="view hidden">
       <h2>Add Secret</h2>
       <input type="text" id="new-path" placeholder="Path (e.g., github/token)">
-      <input type="password" id="new-value" placeholder="Value">
+      <input type="password" id="new-value" placeholder="Secret Value">
       <div class="actions">
         <button id="cancel-add" class="btn">Cancel</button>
         <button id="save-btn" class="btn primary">Save</button>
