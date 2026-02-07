@@ -27,6 +27,12 @@ struct ClawBoxApp: App {
             }
         }
         
+        // Settings window
+        Settings {
+            SettingsView()
+                .environmentObject(vaultManager)
+        }
+        
         // Menu bar extra
         MenuBarExtra {
             MenuBarView()

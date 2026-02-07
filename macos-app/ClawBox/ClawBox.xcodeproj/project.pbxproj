@@ -11,6 +11,9 @@
 		0002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0011 /* ContentView.swift */; };
 		0003 /* VaultManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0012 /* VaultManager.swift */; };
 		0004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0013 /* Assets.xcassets */; };
+		0005 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0014 /* SettingsView.swift */; };
+		0006 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0015 /* BiometricAuth.swift */; };
+		0007 /* AutoLockService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0016 /* AutoLockService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,6 +21,9 @@
 		0011 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		0012 /* VaultManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManager.swift; sourceTree = "<group>"; };
 		0013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0014 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		0015 /* BiometricAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
+		0016 /* AutoLockService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoLockService.swift; sourceTree = "<group>"; };
 		0020 /* ClawBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClawBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -46,6 +52,7 @@
 				0010 /* ClawBoxApp.swift */,
 				0043 /* Views */,
 				0044 /* Models */,
+				0045 /* Services */,
 				0013 /* Assets.xcassets */,
 			);
 			path = ClawBox;
@@ -63,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				0011 /* ContentView.swift */,
+				0014 /* SettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -73,6 +81,15 @@
 				0012 /* VaultManager.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		0045 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				0015 /* BiometricAuth.swift */,
+				0016 /* AutoLockService.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -142,6 +159,9 @@
 				0001 /* ClawBoxApp.swift in Sources */,
 				0002 /* ContentView.swift in Sources */,
 				0003 /* VaultManager.swift in Sources */,
+				0005 /* SettingsView.swift in Sources */,
+				0006 /* BiometricAuth.swift in Sources */,
+				0007 /* AutoLockService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,13 +227,14 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Unlock ClawBox vault";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Harris Han. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.harrishan.ClawBox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -233,13 +254,14 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Unlock ClawBox vault";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Harris Han. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.harrishan.ClawBox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

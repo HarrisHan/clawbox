@@ -53,9 +53,12 @@ class VaultManager: ObservableObject {
     @Published var secrets: [SecretEntry] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var biometricEnabled = false
     
     private let vaultPath: URL
     private var clawboxPath: String
+    private let biometricAuth = BiometricAuth.shared
+    private let autoLockService = AutoLockService.shared
     
     var isUnlocked: Bool {
         if case .unlocked = state { return true }
@@ -88,6 +91,18 @@ class VaultManager: ObservableObject {
         } else {
             state = .notInitialized
         }
+        
+        // Load biometric settings
+        biometricEnabled = UserDefaults.standard.bool(forKey: "biometricEnabled") && biometricAuth.hasStoredPassword
+    }
+    
+    /// Setup auto-lock when unlocked
+    private func setupAutoLock() {
+        autoLockService.start { [weak self] in
+            Task { @MainActor in
+                self?.lock()
+            }
+        }
     }
     
     /// Initialize vault with password
@@ -114,6 +129,7 @@ class VaultManager: ObservableObject {
         if result.exitCode == 0 {
             state = .unlocked
             parseSecrets(from: result.output)
+            setupAutoLock()
         } else {
             throw ClawBoxError.unlockFailed("Invalid password")
         }
@@ -123,6 +139,45 @@ class VaultManager: ObservableObject {
     func lock() {
         secrets = []
         state = .locked
+        currentPassword = nil
+        autoLockService.stop()
+    }
+    
+    /// Unlock with biometrics
+    func unlockWithBiometrics() async throws {
+        guard biometricAuth.hasStoredPassword else {
+            throw ClawBoxError.unlockFailed("No saved password")
+        }
+        
+        isLoading = true
+        defer { isLoading = false }
+        
+        let password = try await biometricAuth.loadPassword()
+        try await unlock(password: password)
+    }
+    
+    /// Enable biometric unlock
+    func enableBiometrics(password: String) throws {
+        try biometricAuth.savePassword(password)
+        biometricEnabled = true
+        UserDefaults.standard.set(true, forKey: "biometricEnabled")
+    }
+    
+    /// Disable biometric unlock
+    func disableBiometrics() {
+        biometricAuth.removePassword()
+        biometricEnabled = false
+        UserDefaults.standard.set(false, forKey: "biometricEnabled")
+    }
+    
+    /// Check if biometrics available
+    var biometricAvailable: Bool {
+        biometricAuth.isAvailable
+    }
+    
+    /// Biometric type name
+    var biometricTypeName: String {
+        biometricAuth.biometricTypeName
     }
     
     /// Load secrets list

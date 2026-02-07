@@ -118,6 +118,21 @@ struct UnlockView: View {
                 .fontWeight(.bold)
             
             VStack(spacing: 16) {
+                // Biometric unlock button
+                if vaultManager.biometricEnabled && vaultManager.biometricAvailable {
+                    Button(action: unlockWithBiometrics) {
+                        HStack {
+                            Image(systemName: "touchid")
+                            Text("Unlock with \(vaultManager.biometricTypeName)")
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(isLoading)
+                    
+                    Text("or")
+                        .foregroundColor(.secondary)
+                }
+                
                 SecureField("Master Password", text: $password)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 300)
@@ -137,11 +152,17 @@ struct UnlockView: View {
                         Text("Unlock")
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
                 .disabled(password.isEmpty || isLoading)
             }
         }
         .padding(40)
+        .onAppear {
+            // Auto-trigger biometric if enabled
+            if vaultManager.biometricEnabled && vaultManager.biometricAvailable {
+                unlockWithBiometrics()
+            }
+        }
     }
     
     private func unlock() {
@@ -153,6 +174,20 @@ struct UnlockView: View {
                 try await vaultManager.unlock(password: password)
             } catch {
                 errorMessage = "Invalid password"
+            }
+            isLoading = false
+        }
+    }
+    
+    private func unlockWithBiometrics() {
+        isLoading = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                try await vaultManager.unlockWithBiometrics()
+            } catch {
+                errorMessage = error.localizedDescription
             }
             isLoading = false
         }
