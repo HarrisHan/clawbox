@@ -1,297 +1,196 @@
 # 🔐 ClawBox
 
-**AI-Native Secret Manager** — Securely manage secrets for AI assistant collaboration
+**AI-Native Secret Manager** — Built for humans and AI agents alike.
 
+[![CI](https://github.com/HarrisHan/clawbox/actions/workflows/ci.yml/badge.svg)](https://github.com/HarrisHan/clawbox/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/HarrisHan/clawbox)](https://github.com/HarrisHan/clawbox/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)]()
 
-[📖 中文文档](docs/README_CN.md)
+## ✨ Features
 
----
-
-## 🎯 Why ClawBox?
-
-When using AI assistants (Claude, GPT, Copilot), you often need them to access your API keys:
-
-- 🏦 Exchange APIs (Binance, Coinbase)
-- ☁️ Cloud Services (AWS, GCP, Azure)
-- 🔧 Dev Tools (GitHub, GitLab, Docker)
-- 📡 Various SaaS APIs
-
-**Problems with existing solutions:**
-
-| Solution | Issue |
-|----------|-------|
-| Paste keys directly | Exposed in chat history ❌ |
-| Environment variables | Messy multi-project management ❌ |
-| 1Password | Not designed for AI ❌ |
-| HashiCorp Vault | Too heavy, over-engineered ❌ |
-
-**ClawBox solution:**
-
-```
-👤 Human                    🤖 AI Assistant
-   │                          │
-   │  Manage (GUI/CLI)        │  Read (CLI)
-   │         ↘              ↙         │
-   │          ┌──────────┐            │
-   │          │ ClawBox  │            │
-   │          │ Encrypted │            │
-   │          │ Controlled│            │
-   │          │ Audited   │            │
-   │          └──────────┘            │
-   │                                  │
-   └──── Approve sensitive ops ◄──────┘
-```
-
----
-
-## ✨ Key Features
-
-### 🔒 Security First
-- **AES-256-GCM** encrypted storage
-- **Master password** protection with optional hardware keys
-- **Zero-knowledge** — we never see your secrets
-
-### 🤖 AI Friendly
-- Simple **CLI interface** for AI assistants
-- **JSON output** for structured parsing
-- **Read-only mode** for AI access
-
-### 👤 Human Control
-- **Access levels** — control what AI can access
-- **Approval workflow** — sensitive keys require human confirmation
-- **Audit logs** — who accessed what and when
-
-### 📱 Multi-platform
-- **CLI** — Command line for AI assistants
-- **macOS App** — Native GUI (coming soon)
-- **Browser Extension** — Web integration (planned)
-
----
+- 🔒 **Military-Grade Encryption**: AES-256-GCM + Argon2id
+- 🤖 **AI-Ready**: JSON output, env vars, non-interactive mode
+- 📊 **Audit Logging**: Tamper-evident logs with hash chain
+- 🍎 **macOS Native**: SwiftUI app with Touch ID support
+- ☁️ **Export/Import**: JSON, YAML, ENV formats
+- 🔑 **Access Levels**: public, normal, sensitive, critical
 
 ## 🚀 Quick Start
 
-### Installation
+### Install
 
 ```bash
-# macOS (Homebrew)
-brew install clawbox/tap/clawbox
-
-# Or download binary
+# macOS / Linux
 curl -sSL https://get.clawbox.sh | sh
-```
 
-### Initialize
-
-```bash
-# Create vault
-clawbox init
-
-# Set master password
-Enter master password: ********
-Confirm password: ********
-✓ Vault created at ~/.clawbox/vault.db
+# Or with Homebrew (coming soon)
+brew install clawbox
 ```
 
 ### Basic Usage
 
 ```bash
-# Set a secret
-clawbox set binance/api-key "your-api-key"
-clawbox set binance/api-secret "your-api-secret" --access sensitive
+# Initialize vault
+clawbox init
 
-# Get a secret
-clawbox get binance/api-key
-# → your-api-key
+# Store a secret
+clawbox set github/token "ghp_xxxxxxxxxxxx"
+
+# Retrieve a secret
+clawbox get github/token
 
 # List all secrets
 clawbox list
-# → binance/api-key
-# → binance/api-secret [sensitive]
 
-# JSON output (AI friendly)
-clawbox get binance/api-key --json
-# → {"key": "binance/api-key", "value": "your-api-key"}
+# Delete a secret
+clawbox delete github/token
 ```
 
-### AI Assistant Usage
+### AI Agent Usage
 
 ```bash
-# AI can retrieve secrets like this
-API_KEY=$(clawbox get binance/api-key)
-API_SECRET=$(clawbox get binance/api-secret)
+# Environment variable for automation
+export CLAWBOX_PASSWORD="your-master-password"
 
-# Then call APIs
-curl -H "X-MBX-APIKEY: $API_KEY" ...
+# JSON output for parsing
+clawbox --json get github/token
+# {"path":"github/token","value":"ghp_xxxxxxxxxxxx"}
+
+# Use in scripts
+TOKEN=$(clawbox get github/token)
+curl -H "Authorization: token $TOKEN" https://api.github.com/user
 ```
 
----
+## 📦 Export & Import
 
-## 📖 Documentation
+```bash
+# Export to JSON
+clawbox export backup.json
 
-- [Installation Guide](docs/installation.md)
-- [CLI Reference](docs/CLI-REFERENCE.md)
-- [macOS App Guide](docs/macos-app.md)
-- [Security Model](docs/SECURITY.md)
-- [AI Integration](docs/ai-integration.md)
-- [API Documentation](docs/api.md)
+# Export to ENV format
+clawbox export secrets.env --format env
 
----
+# Import from file
+clawbox import backup.json
 
-## 🗺️ Roadmap
+# Import with skip existing
+clawbox import backup.json --skip-existing
+```
 
-### v0.1.0 - MVP (CLI Basic)
-- [x] Project setup
-- [ ] Encryption engine
-- [ ] Basic CRUD commands
-- [ ] Master password protection
+## 📊 Audit Log
 
-### v0.2.0 - Permissions & Audit
-- [ ] AI access control
-- [ ] Audit logging
-- [ ] Key grouping/tags
+```bash
+# View recent audit entries
+clawbox audit
 
-### v0.3.0 - macOS App
-- [ ] SwiftUI native app
-- [ ] Menu bar access
-- [ ] Keychain integration
+# Filter by time
+clawbox audit --since 24h
 
-### v0.4.0 - Advanced Security
-- [ ] Hardware key support (YubiKey)
-- [ ] Biometric unlock (Touch ID)
-- [ ] Key expiration (TTL)
+# JSON output
+clawbox --json audit
+```
 
-### v0.5.0 - Sync & Share
-- [ ] E2E encrypted cloud sync
-- [ ] Team shared vaults
-- [ ] Import/Export
+## 🔐 Security
 
-### v1.0.0 - Production Release
-- [ ] Stable API
-- [ ] Full documentation
-- [ ] Browser extension
+- **Encryption**: AES-256-GCM with random nonces
+- **Key Derivation**: Argon2id (m=64MB, t=3, p=4)
+- **Storage**: SQLite with 600 permissions
+- **Audit**: SHA-256 hash chain for integrity
 
----
+### Access Levels
+
+| Level | Description |
+|-------|-------------|
+| `public` | AI can access freely |
+| `normal` | Default, vault unlocked required |
+| `sensitive` | AI access requires approval |
+| `critical` | Human only |
+
+```bash
+clawbox set api/key "xxx" --access sensitive
+```
+
+## 🍎 macOS App
+
+The macOS app provides:
+- Touch ID / Face ID unlock
+- Menu bar quick access
+- Auto-lock on timeout/screen lock
+- Visual secret management
+
+Build from source:
+```bash
+cd macos-app/ClawBox
+open ClawBox.xcodeproj
+# Cmd+R to run
+```
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      ClawBox                            │
-├─────────────────┬─────────────────┬─────────────────────┤
-│      CLI        │   macOS App     │   Browser Extension │
-│    (Rust)       │   (Swift)       │   (TypeScript)      │
-└────────┬────────┴────────┬────────┴──────────┬──────────┘
-         │                 │                   │
-         └─────────────────┼───────────────────┘
-                           │
-                    ┌──────▼──────┐
-                    │  Core Lib   │
-                    │   (Rust)    │
-                    └──────┬──────┘
-                           │
-         ┌─────────────────┼─────────────────┐
-         │                 │                 │
-    ┌────▼────┐      ┌────▼────┐      ┌────▼────┐
-    │ Crypto  │      │ Storage │      │  Audit  │
-    │AES-256  │      │ SQLite  │      │  Log    │
-    └─────────┘      └─────────┘      └─────────┘
+┌─────────────────────────────────────────────────┐
+│                   ClawBox                        │
+├──────────────┬──────────────┬──────────────┬────┤
+│   CLI        │  macOS App   │   FFI        │ API│
+├──────────────┴──────────────┴──────────────┴────┤
+│                 clawbox-core                     │
+├─────────────────────────────────────────────────┤
+│  Crypto     │  Storage    │  Audit    │  Sync   │
+│  (AES-GCM)  │  (SQLite)   │  (Chain)  │ (iCloud)│
+└─────────────────────────────────────────────────┘
 ```
 
-### Tech Stack
-
-| Component | Technology | Reason |
-|-----------|------------|--------|
-| Core | Rust | Security, performance, single binary |
-| CLI | Rust (clap) | Unified stack |
-| macOS App | Swift/SwiftUI | Native experience |
-| Encryption | libsodium | Industry standard |
-| Storage | SQLite | Lightweight, reliable |
-
----
-
-## 🔐 Security Model
-
-### Encryption
+## 📁 File Structure
 
 ```
-Master Password
-      │
-      ▼
-   Argon2id (key derivation)
-      │
-      ▼
-  Derived Key (256-bit)
-      │
-      ▼
-  AES-256-GCM (encrypt secrets)
-      │
-      ▼
-  Encrypted Vault (SQLite)
+~/.clawbox/
+├── vault.db       # Encrypted secrets (SQLite)
+└── audit.log      # Audit trail (if enabled)
 ```
 
-### Access Levels
-
-| Level | Description | AI Access |
-|-------|-------------|-----------|
-| `public` | Public info | ✅ Free access |
-| `normal` | Regular keys | ✅ Requires unlock |
-| `sensitive` | Sensitive keys | ⚠️ Requires approval |
-| `critical` | Critical keys | ❌ Human only |
-
----
-
-## 🤝 OpenClaw Integration
-
-ClawBox is designed for the [OpenClaw](https://github.com/openclaw/openclaw) ecosystem:
-
-```yaml
-# openclaw.yaml
-tools:
-  clawbox:
-    enabled: true
-    vault: ~/.clawbox
-    ai_access: normal
-```
-
----
-
-## 🧑‍💻 Development
+## 🛠️ Development
 
 ```bash
-# Clone repo
+# Clone
 git clone https://github.com/HarrisHan/clawbox.git
 cd clawbox
 
-# Build CLI
+# Build
 cargo build --release
 
-# Run tests
+# Test
 cargo test
 
-# Build macOS App
-cd macos-app
-xcodebuild -scheme ClawBox -configuration Release
+# Run
+./target/release/clawbox --help
 ```
 
----
+## 📖 Documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Security](docs/SECURITY.md)
+- [Roadmap](docs/ROADMAP.md)
+- [CLI Reference](docs/CLI_REFERENCE.md)
+
+## 🗺️ Roadmap
+
+- [x] v0.1.0 - MVP CLI
+- [x] v0.2.0 - Audit Logging
+- [x] v0.3.0 - macOS App
+- [x] v0.4.0 - Touch ID / Auto-Lock
+- [x] v0.5.0 - Export / Import
+- [x] v1.0.0 - Stable Release
+- [ ] v1.1.0 - Browser Extension
+- [ ] v1.2.0 - Mobile Apps
+
+## 🤝 Contributing
+
+Contributions welcome! Please read our [Contributing Guide](CONTRIBUTING.md).
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE)
+MIT © [Harris Han](https://github.com/HarrisHan)
 
 ---
 
-## 🙏 Credits
-
-- [libsodium](https://libsodium.org/) - Crypto library
-- [SQLite](https://sqlite.org/) - Storage engine
-- [clap](https://clap.rs/) - CLI framework
-- [OpenClaw](https://openclaw.ai/) - AI assistant platform
-
----
-
-<p align="center">
-  <b>ClawBox</b> — Let AI access your secrets securely 🔐
-</p>
+Made with ❤️ for the AI-native future.
