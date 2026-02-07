@@ -2,8 +2,9 @@
 //!
 //! Uses SQLite for persistent storage
 
-use crate::{AccessLevel, Result, SecretInfo};
+use crate::{AccessLevel, Error, Result, SecretInfo};
 use rusqlite::Connection;
+use std::os::unix::fs::PermissionsExt;
 
 /// Initialize database schema
 pub fn init_schema(conn: &Connection) -> Result<()> {
@@ -64,11 +65,51 @@ pub struct SqliteStore {
     conn: Connection,
 }
 
+/// Validate a secret key path
+pub fn validate_key_path(path: &str) -> Result<()> {
+    // Check for empty path
+    if path.is_empty() {
+        return Err(Error::Other("Key path cannot be empty".to_string()));
+    }
+    
+    // Check for path traversal
+    if path.contains("..") {
+        return Err(Error::Other("Key path cannot contain '..'".to_string()));
+    }
+    
+    // Check for absolute paths
+    if path.starts_with('/') {
+        return Err(Error::Other("Key path cannot start with '/'".to_string()));
+    }
+    
+    // Check for null bytes
+    if path.contains('\0') {
+        return Err(Error::Other("Key path cannot contain null bytes".to_string()));
+    }
+    
+    // Check for control characters
+    if path.chars().any(|c| c.is_control()) {
+        return Err(Error::Other("Key path cannot contain control characters".to_string()));
+    }
+    
+    Ok(())
+}
+
 impl SqliteStore {
     /// Open or create a store at the given path
     pub fn open(path: &std::path::Path) -> Result<Self> {
+        let is_new = !path.exists();
         let conn = Connection::open(path)?;
         init_schema(&conn)?;
+        
+        // Set restrictive permissions on new database files (Unix only)
+        #[cfg(unix)]
+        if is_new {
+            if let Err(e) = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600)) {
+                eprintln!("Warning: Could not set file permissions: {}", e);
+            }
+        }
+        
         Ok(Self { conn })
     }
 
@@ -110,6 +151,9 @@ impl SecretStore for SqliteStore {
     }
 
     fn set(&mut self, path: &str, value: &[u8], info: &SecretInfo) -> Result<()> {
+        // Validate key path
+        validate_key_path(path)?;
+        
         let id = uuid::Uuid::new_v4().to_string();
         let now = chrono::Utc::now().timestamp();
         let tags_json = serde_json::to_string(&info.tags)?;
