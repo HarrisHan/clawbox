@@ -1,11 +1,14 @@
 // ClawBox Browser Extension - Background Service Worker
-// Standalone version using chrome.storage
+// Uses chrome.storage.sync for multi-device sync
 
 class ClawBoxBackground {
   constructor() {
     this.isUnlocked = false;
     this.secrets = [];
     this.masterKey = null;
+    // Use sync storage for cross-device sync (up to 100KB)
+    // Falls back to local if sync unavailable
+    this.storage = chrome.storage.sync || chrome.storage.local;
     
     this.init();
   }
@@ -29,7 +32,7 @@ class ClawBoxBackground {
   }
 
   async checkStatus() {
-    const data = await chrome.storage.local.get(['salt', 'verification']);
+    const data = await this.storage.get(['salt', 'verification']);
     return data.salt != null;
   }
 
@@ -63,8 +66,78 @@ class ClawBoxBackground {
       case 'list':
         return { secrets: this.secrets };
 
+      case 'export':
+        return await this.exportVault();
+
+      case 'import':
+        return await this.importVault(message.data, message.password);
+
       default:
         return { error: 'Unknown action' };
+    }
+  }
+
+  // Export vault data for backup/sync
+  async exportVault() {
+    if (!this.isUnlocked) {
+      return { error: 'Vault locked' };
+    }
+
+    try {
+      const data = await this.storage.get(['salt', 'verification', 'secrets']);
+      const exportData = {
+        version: '1.0',
+        exported: new Date().toISOString(),
+        salt: data.salt,
+        verification: data.verification,
+        secrets: data.secrets || {}
+      };
+      
+      return { 
+        success: true, 
+        data: JSON.stringify(exportData, null, 2)
+      };
+    } catch (e) {
+      return { error: e.message };
+    }
+  }
+
+  // Import vault data from backup
+  async importVault(jsonData, password) {
+    try {
+      const data = JSON.parse(jsonData);
+      
+      if (!data.salt || !data.verification) {
+        return { error: 'Invalid backup file' };
+      }
+
+      // Verify password works with imported data
+      const salt = this.base64ToArrayBuffer(data.salt);
+      const key = await this.deriveKey(password, salt);
+
+      try {
+        const decrypted = await this.decrypt(data.verification, key);
+        if (decrypted !== 'clawbox-ok') {
+          return { error: 'Wrong password for this backup' };
+        }
+      } catch {
+        return { error: 'Wrong password for this backup' };
+      }
+
+      // Import data
+      await this.storage.set({
+        salt: data.salt,
+        verification: data.verification,
+        secrets: data.secrets || {}
+      });
+
+      this.masterKey = key;
+      this.isUnlocked = true;
+      this.secrets = Object.keys(data.secrets || {}).map(path => ({ path }));
+
+      return { success: true, secrets: this.secrets };
+    } catch (e) {
+      return { error: 'Invalid backup file: ' + e.message };
     }
   }
 
@@ -152,7 +225,7 @@ class ClawBoxBackground {
       // Create verification token
       const verification = await this.encrypt('clawbox-ok', key);
       
-      await chrome.storage.local.set({
+      await this.storage.set({
         salt: this.arrayBufferToBase64(salt),
         verification: verification,
         secrets: {}
@@ -170,7 +243,7 @@ class ClawBoxBackground {
 
   async unlock(password) {
     try {
-      const data = await chrome.storage.local.get(['salt', 'verification', 'secrets']);
+      const data = await this.storage.get(['salt', 'verification', 'secrets']);
       
       if (!data.salt) {
         return { success: false, error: 'Not initialized' };
@@ -214,7 +287,7 @@ class ClawBoxBackground {
     }
 
     try {
-      const data = await chrome.storage.local.get(['secrets']);
+      const data = await this.storage.get(['secrets']);
       const secrets = data.secrets || {};
       
       if (!secrets[path]) {
@@ -234,12 +307,12 @@ class ClawBoxBackground {
     }
 
     try {
-      const data = await chrome.storage.local.get(['secrets']);
+      const data = await this.storage.get(['secrets']);
       const secrets = data.secrets || {};
       
       secrets[path] = await this.encrypt(value, this.masterKey);
       
-      await chrome.storage.local.set({ secrets });
+      await this.storage.set({ secrets });
 
       // Update list
       if (!this.secrets.find(s => s.path === path)) {
@@ -258,12 +331,12 @@ class ClawBoxBackground {
     }
 
     try {
-      const data = await chrome.storage.local.get(['secrets']);
+      const data = await this.storage.get(['secrets']);
       const secrets = data.secrets || {};
       
       delete secrets[path];
       
-      await chrome.storage.local.set({ secrets });
+      await this.storage.set({ secrets });
       this.secrets = this.secrets.filter(s => s.path !== path);
 
       return { success: true };

@@ -220,6 +220,29 @@ input::placeholder {
   flex: 1;
 }
 
+.sync-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-small {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: transparent;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-small:hover {
+  border-color: #4ecdc4;
+  color: #4ecdc4;
+}
+
 footer {
   margin-top: 16px;
   padding-top: 12px;

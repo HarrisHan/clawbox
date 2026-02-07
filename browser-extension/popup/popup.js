@@ -28,6 +28,13 @@ class ClawBoxPopup {
     document.getElementById('cancel-add').addEventListener('click', () => this.showSecretsView());
     document.getElementById('save-btn').addEventListener('click', () => this.saveSecret());
     
+    // Export/Import
+    document.getElementById('export-btn')?.addEventListener('click', () => this.exportVault());
+    document.getElementById('import-btn')?.addEventListener('click', () => {
+      document.getElementById('import-file').click();
+    });
+    document.getElementById('import-file')?.addEventListener('change', (e) => this.importVault(e));
+    
     this.passwordInput?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') this.unlock();
     });
@@ -317,6 +324,61 @@ class ClawBoxPopup {
         }
       });
     });
+  }
+
+  async exportVault() {
+    try {
+      const response = await this.sendMessage({ action: 'export' });
+      if (response.success) {
+        // Download as file
+        const blob = new Blob([response.data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `clawbox-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showToast('Backup exported!');
+      } else {
+        this.showToast(response.error || 'Export failed', 'error');
+      }
+    } catch (e) {
+      this.showToast('Export failed', 'error');
+    }
+  }
+
+  async importVault(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const password = prompt('Enter the password for this backup:');
+      if (!password) return;
+
+      try {
+        const response = await this.sendMessage({ 
+          action: 'import', 
+          data: e.target.result,
+          password 
+        });
+
+        if (response.success) {
+          this.isUnlocked = true;
+          this.secrets = response.secrets || [];
+          this.showSecretsView();
+          this.showToast('Backup imported!');
+        } else {
+          this.showToast(response.error || 'Import failed', 'error');
+        }
+      } catch (err) {
+        this.showToast('Import failed', 'error');
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset file input
+    event.target.value = '';
   }
 
   showToast(message, type = 'success') {
