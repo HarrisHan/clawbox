@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClawBox</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="../icons/icon32.png" alt="ClawBox" class="logo">
+      <h1>ClawBox</h1>
+      <span id="status" class="status locked">🔒</span>
+    </header>
+
+    <!-- Unlock View -->
+    <div id="unlock-view" class="view">
+      <p>Enter master password to unlock</p>
+      <input type="password" id="password" placeholder="Master Password" autofocus>
+      <button id="unlock-btn" class="btn primary">Unlock</button>
+      <p id="error-msg" class="error"></p>
+    </div>
+
+    <!-- Secrets View -->
+    <div id="secrets-view" class="view hidden">
+      <input type="text" id="search" placeholder="🔍 Search secrets...">
+      <ul id="secrets-list"></ul>
+      <div class="actions">
+        <button id="lock-btn" class="btn">Lock</button>
+        <button id="add-btn" class="btn primary">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Add Secret View -->
+    <div id="add-view" class="view hidden">
+      <h2>Add Secret</h2>
+      <input type="text" id="new-path" placeholder="Path (e.g., github/token)">
+      <input type="password" id="new-value" placeholder="Value">
+      <div class="actions">
+        <button id="cancel-add" class="btn">Cancel</button>
+        <button id="save-btn" class="btn primary">Save</button>
+      </div>
+    </div>
+
+    <footer>
+      <a href="https://github.com/HarrisHan/clawbox" target="_blank">ClawBox v1.1.0</a>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

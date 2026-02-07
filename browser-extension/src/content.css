@@ -1,0 +1,29 @@
+/* ClawBox Content Script Styles */
+
+/* Highlight for ClawBox auto-fill targets */
+.clawbox-highlight {
+  outline: 2px solid #4ecdc4 !important;
+  outline-offset: 2px !important;
+}
+
+/* ClawBox icon badge for input fields */
+.clawbox-badge {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background: #4ecdc4;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999;
+  font-size: 12px;
+}
+
+.clawbox-badge:hover {
+  background: #45b7aa;
+}
