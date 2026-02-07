@@ -180,8 +180,10 @@ cargo test
 - [x] v0.4.0 - Touch ID / Auto-Lock
 - [x] v0.5.0 - Export / Import
 - [x] v1.0.0 - Stable Release
-- [ ] v1.1.0 - Browser Extension
-- [ ] v1.2.0 - Mobile Apps
+- [x] v1.1.0 - Browser Extension ✨
+- [x] v1.2.0 - iOS App ✨
+- [ ] v1.3.0 - Android App
+- [ ] v2.0.0 - Cloud Sync
 
 ## 🤝 Contributing
 
