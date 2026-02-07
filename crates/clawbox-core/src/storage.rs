@@ -40,8 +40,8 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
             success INTEGER NOT NULL,
             error_message TEXT,
             source TEXT NOT NULL,
-            prev_hash TEXT,
-            metadata TEXT
+            hash TEXT,
+            prev_hash TEXT
         );
 
         CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log(timestamp);
@@ -132,6 +132,11 @@ impl SqliteStore {
             rusqlite::params![key, value],
         )?;
         Ok(())
+    }
+    
+    /// Get database connection reference (for audit logging)
+    pub fn connection(&self) -> &Connection {
+        &self.conn
     }
 }
 

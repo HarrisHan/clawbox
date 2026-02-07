@@ -279,9 +279,65 @@ fn main() -> Result<()> {
             println!("{} Vault locked", style("✓").green());
         }
 
-        Commands::Audit { key: _, since: _ } => {
-            println!("Audit log (not implemented yet)");
-            // TODO: Implement audit log display
+        Commands::Audit { key, since } => {
+            let mut vault = ClawBox::open(&vault_path)?;
+            unlock_vault(&mut vault)?;
+            
+            use clawbox_core::audit::AuditFilter;
+            use chrono::{Duration, Utc};
+            
+            let mut filter = AuditFilter::default();
+            filter.key_path = key;
+            filter.limit = Some(50);
+            
+            // Parse since parameter (e.g., "1h", "24h", "7d")
+            if let Some(since_str) = since {
+                let since_time = if since_str.ends_with('h') {
+                    let hours: i64 = since_str.trim_end_matches('h').parse().unwrap_or(24);
+                    Utc::now() - Duration::hours(hours)
+                } else if since_str.ends_with('d') {
+                    let days: i64 = since_str.trim_end_matches('d').parse().unwrap_or(7);
+                    Utc::now() - Duration::days(days)
+                } else {
+                    Utc::now() - Duration::hours(24)
+                };
+                filter.since = Some(since_time);
+            }
+            
+            let entries = vault.audit(&filter)?;
+            
+            if cli.json {
+                println!("{}", serde_json::to_string_pretty(&entries)?);
+            } else if entries.is_empty() {
+                println!("No audit entries found.");
+            } else {
+                let count = entries.len();
+                println!("{:<20} {:<8} {:<8} {:<30} {}", 
+                    "TIMESTAMP", "ACTOR", "ACTION", "KEY", "STATUS");
+                println!("{}", "-".repeat(80));
+                
+                for entry in &entries {
+                    let status = if entry.success { 
+                        style("✓").green().to_string() 
+                    } else { 
+                        style("✗").red().to_string() 
+                    };
+                    
+                    println!("{:<20} {:<8} {:<8} {:<30} {}", 
+                        entry.timestamp.format("%Y-%m-%d %H:%M:%S"),
+                        entry.actor.actor_type,
+                        entry.action.as_str(),
+                        if entry.key_path.len() > 28 { 
+                            format!("{}...", &entry.key_path[..25]) 
+                        } else { 
+                            entry.key_path.clone() 
+                        },
+                        status
+                    );
+                }
+                
+                println!("\nTotal: {} entries", count);
+            }
         }
     }
 

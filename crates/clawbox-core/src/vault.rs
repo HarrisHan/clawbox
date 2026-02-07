@@ -1,6 +1,7 @@
 //! Vault management for ClawBox
 
 use crate::{
+    audit::{Action, AuditEntry, AuditFilter, AuditLogger, ActorInfo},
     crypto::{self, DerivedKey, EncryptedData},
     error::Error,
     storage::{SecretStore, SqliteStore},
@@ -51,6 +52,10 @@ impl ClawBox {
         self.store.set_meta("verification_data", &encrypted.ciphertext)?;
 
         self.key = Some(key);
+        
+        // Log audit
+        self.log_audit(Action::Init, "vault", true, None);
+        
         Ok(())
     }
 
@@ -111,6 +116,7 @@ impl ClawBox {
             Some(data) => {
                 // Parse encrypted data (nonce + ciphertext)
                 if data.len() < 12 {
+                    self.log_audit(Action::Read, path, false, Some("Invalid data format"));
                     return Err(Error::Decryption("Invalid data format".to_string()));
                 }
                 
@@ -123,9 +129,13 @@ impl ClawBox {
                 let value = String::from_utf8(plaintext)
                     .map_err(|e| Error::Decryption(e.to_string()))?;
                 
+                self.log_audit(Action::Read, path, true, None);
                 Ok(Some(value))
             }
-            None => Ok(None),
+            None => {
+                self.log_audit(Action::Read, path, false, Some("Not found"));
+                Ok(None)
+            }
         }
     }
 
@@ -150,8 +160,16 @@ impl ClawBox {
             updated_at: chrono::Utc::now(),
         };
 
-        self.store.set(path, &data, &info)?;
-        Ok(())
+        match self.store.set(path, &data, &info) {
+            Ok(_) => {
+                self.log_audit(Action::Write, path, true, None);
+                Ok(())
+            }
+            Err(e) => {
+                self.log_audit(Action::Write, path, false, Some(&e.to_string()));
+                Err(e)
+            }
+        }
     }
 
     /// Delete a secret
@@ -159,7 +177,16 @@ impl ClawBox {
         if !self.is_unlocked() {
             return Err(Error::VaultLocked);
         }
-        self.store.delete(path)
+        match self.store.delete(path) {
+            Ok(deleted) => {
+                self.log_audit(Action::Delete, path, deleted, if deleted { None } else { Some("Not found") });
+                Ok(deleted)
+            }
+            Err(e) => {
+                self.log_audit(Action::Delete, path, false, Some(&e.to_string()));
+                Err(e)
+            }
+        }
     }
 
     /// List all secrets
@@ -173,6 +200,29 @@ impl ClawBox {
     /// Get vault path
     pub fn path(&self) -> &Path {
         &self.path
+    }
+    
+    /// Query audit log
+    pub fn audit(&self, filter: &AuditFilter) -> Result<Vec<AuditEntry>> {
+        let logger = AuditLogger::new(self.store.connection());
+        logger.query(filter)
+    }
+    
+    /// Verify audit log integrity
+    pub fn verify_audit_integrity(&self) -> Result<bool> {
+        let logger = AuditLogger::new(self.store.connection());
+        logger.verify_integrity()
+    }
+    
+    /// Log an audit entry
+    fn log_audit(&self, action: Action, key_path: &str, success: bool, error: Option<&str>) {
+        let logger = AuditLogger::new(self.store.connection());
+        let mut entry = AuditEntry::new(action, key_path, success)
+            .with_actor(ActorInfo::human());
+        if let Some(err) = error {
+            entry = entry.with_error(err);
+        }
+        let _ = logger.log(entry);
     }
 }
 

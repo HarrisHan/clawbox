@@ -18,6 +18,8 @@ chrono.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 uuid.workspace = true
+sha2 = "0.10"
+whoami = "1.5"
 
 [dev-dependencies]
 tempfile.workspace = true
