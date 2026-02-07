@@ -1,0 +1,30 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+
+# IDE
+.idea/
+.vscode/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Build artifacts
+*.o
+*.a
+*.dylib
+*.so
+*.dll
+
+# Test outputs
+*.log
+coverage/
+
+# Local config
+.env
+.env.local

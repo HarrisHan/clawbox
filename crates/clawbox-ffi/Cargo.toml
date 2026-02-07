@@ -1,0 +1,17 @@
+[package]
+name = "clawbox-ffi"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "ClawBox FFI bindings for Swift/C"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+clawbox-core = { path = "../clawbox-core" }
+libc = "0.2"
+
+[build-dependencies]
+cbindgen = "0.26"

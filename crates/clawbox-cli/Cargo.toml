@@ -1,0 +1,21 @@
+[package]
+name = "clawbox-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "ClawBox CLI - AI-Native Secret Manager"
+
+[[bin]]
+name = "clawbox"
+path = "src/main.rs"
+
+[dependencies]
+clawbox-core = { path = "../clawbox-core" }
+clap.workspace = true
+dialoguer.workspace = true
+console.workspace = true
+rpassword.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+dirs = "5.0"
