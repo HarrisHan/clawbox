@@ -89,21 +89,57 @@ class VaultManager: ObservableObject {
         self.vaultPath = home.appendingPathComponent(".clawbox")
         
         // Find clawbox binary
-        self.clawboxPath = "/usr/local/bin/clawbox"
-        let possiblePaths = [
-            "/usr/local/bin/clawbox",
-            "/opt/homebrew/bin/clawbox",
-            home.appendingPathComponent("Desktop/projects/clawbox/target/release/clawbox").path
-        ]
+        self.clawboxPath = Self.findAndSetupClawbox(vaultPath: self.vaultPath)
         
-        for path in possiblePaths {
-            if FileManager.default.fileExists(atPath: path) {
-                self.clawboxPath = path
-                break
+        checkVaultStatus()
+    }
+    
+    /// Find clawbox binary or install from app bundle
+    private static func findAndSetupClawbox(vaultPath: URL) -> String {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let userBinPath = vaultPath.appendingPathComponent("bin/clawbox").path
+        
+        // Priority 1: Check if already installed in user directory
+        if FileManager.default.fileExists(atPath: userBinPath) {
+            return userBinPath
+        }
+        
+        // Priority 2: Try to install from app bundle
+        if let bundledPath = Bundle.main.path(forResource: "clawbox", ofType: nil) {
+            do {
+                // Create bin directory if needed
+                let binDir = vaultPath.appendingPathComponent("bin")
+                try FileManager.default.createDirectory(at: binDir, withIntermediateDirectories: true)
+                
+                // Copy bundled binary to user directory
+                try FileManager.default.copyItem(atPath: bundledPath, toPath: userBinPath)
+                
+                // Make executable
+                let attributes = [FileAttributeKey.posixPermissions: 0o755]
+                try FileManager.default.setAttributes(attributes, ofItemAtPath: userBinPath)
+                
+                print("✅ ClawBox CLI installed to: \(userBinPath)")
+                return userBinPath
+            } catch {
+                print("⚠️ Failed to install bundled CLI: \(error.localizedDescription)")
             }
         }
         
-        checkVaultStatus()
+        // Priority 3: Check system locations
+        let systemPaths = [
+            home.appendingPathComponent(".cargo/bin/clawbox").path,
+            "/usr/local/bin/clawbox",
+            "/opt/homebrew/bin/clawbox",
+        ]
+        
+        for path in systemPaths {
+            if FileManager.default.fileExists(atPath: path) {
+                return path
+            }
+        }
+        
+        // Fallback (will likely fail, but needed for initialization)
+        return "/usr/local/bin/clawbox"
     }
     
     /// Check if vault exists and is initialized
@@ -137,6 +173,7 @@ class VaultManager: ObservableObject {
         if result.exitCode == 0 {
             state = .unlocked
             try await loadSecrets()
+            setupAutoLock()  // Start auto-lock timer
         } else {
             throw ClawBoxError.initFailed(result.output)
         }

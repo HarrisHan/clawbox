@@ -38,7 +38,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0040 /* = */ = {
+		0040 = {
 			isa = PBXGroup;
 			children = (
 				0041 /* ClawBox */,
@@ -102,7 +102,8 @@
 				0051 /* Sources */,
 				0030 /* Frameworks */,
 				0052 /* Resources */,
-			);
+			
+				2CC225920EB84928A3D67C3D /* Embed ClawBox CLI */,);
 			buildRules = (
 			);
 			dependencies = (
@@ -130,7 +131,7 @@
 				en,
 				Base,
 			);
-			mainGroup = 0040 /* = */;
+			mainGroup = 0040;
 			productRefGroup = 0042 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -150,6 +151,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		2CC225920EB84928A3D67C3D /* Embed ClawBox CLI */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed ClawBox CLI";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "#!/bin/bash\nset -e\necho \"🔧 Embedding ClawBox CLI...\"\nCLI_SOURCE=\"${PROJECT_DIR}/ClawBox/Resources/clawbox\"\nCLI_DEST=\"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Contents/Resources/clawbox\"\nif [ -f \"$CLI_SOURCE\" ]; then\n    mkdir -p \"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Contents/Resources\"\n    cp \"$CLI_SOURCE\" \"$CLI_DEST\"\n    chmod +x \"$CLI_DEST\"\n    echo \"✅ CLI embedded from Resources\"\nelse\n    CARGO_CLI=\"${PROJECT_DIR}/../../target/release/clawbox\"\n    if [ -f \"$CARGO_CLI\" ]; then\n        mkdir -p \"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/Contents/Resources\"\n        cp \"$CARGO_CLI\" \"$CLI_DEST\"\n        chmod +x \"$CLI_DEST\"\n        echo \"✅ CLI embedded from Cargo build\"\n    else\n        echo \"❌ CLI not found! Run: cargo build --release\"\n        exit 1\n    fi\nfi";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		0051 /* Sources */ = {
@@ -223,7 +245,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 98393WUZ6P;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -250,7 +272,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 98393WUZ6P;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";

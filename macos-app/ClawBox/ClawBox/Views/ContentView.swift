@@ -2,10 +2,125 @@
 //  ContentView.swift
 //  ClawBox
 //
-//  Modern UI inspired by 1Password/Bitwarden
+//  Black & Gold Theme with Light/Dark Mode
 //
 
 import SwiftUI
+
+// MARK: - Adaptive Colors
+
+extension Color {
+    // Primary Gold
+    static let clawPrimary = Color(light: .init(red: 0.75, green: 0.55, blue: 0.10),
+                                    dark: .init(red: 1.0, green: 0.78, blue: 0.31))
+    static let clawSecondary = Color(light: .init(red: 0.65, green: 0.45, blue: 0.05),
+                                      dark: .init(red: 0.85, green: 0.65, blue: 0.20))
+    
+    static let clawAccent = Color(red: 0.95, green: 0.30, blue: 0.30)
+    static let clawSuccess = Color(red: 0.20, green: 0.75, blue: 0.50)
+    
+    static let clawBackground = Color(light: .init(red: 0.96, green: 0.96, blue: 0.97),
+                                       dark: .init(red: 0.08, green: 0.08, blue: 0.10))
+    static let clawSurface = Color(light: .init(white: 1.0),
+                                    dark: .init(red: 0.12, green: 0.12, blue: 0.14))
+    static let clawSurfaceLight = Color(light: .init(red: 0.94, green: 0.94, blue: 0.95),
+                                         dark: .init(red: 0.16, green: 0.16, blue: 0.18))
+    static let clawText = Color(light: .init(red: 0.10, green: 0.10, blue: 0.12),
+                                 dark: .white)
+    static let clawTextSecondary = Color(light: .init(white: 0.45),
+                                          dark: .init(white: 0.55))
+    
+    static let goldLight = Color(red: 0.95, green: 0.75, blue: 0.25)
+    static let goldDark = Color(red: 0.80, green: 0.55, blue: 0.10)
+    
+    static var clawGradient: LinearGradient {
+        LinearGradient(colors: [goldLight, goldDark], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+    
+    init(light lightColor: Color, dark darkColor: Color) {
+        self.init(nsColor: NSColor(name: nil) { appearance in
+            if appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+                return NSColor(darkColor)
+            } else {
+                return NSColor(lightColor)
+            }
+        })
+    }
+    
+    init(nsColor: NSColor) {
+        self.init(nsColor)
+    }
+}
+
+// MARK: - Styles
+
+struct ModernPrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .background(Color.clawGradient)
+            .cornerRadius(10)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .opacity(configuration.isPressed ? 0.9 : 1)
+    }
+}
+
+struct ModernSecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundColor(.clawPrimary)
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .background(Color.clawPrimary.opacity(0.15))
+            .cornerRadius(10)
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.clawPrimary.opacity(0.3), lineWidth: 1))
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
+struct ModernTextFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .textFieldStyle(.plain)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.clawSurfaceLight)
+            .cornerRadius(10)
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.clawPrimary.opacity(0.2), lineWidth: 1))
+    }
+}
+
+// MARK: - Logo
+
+struct ClawBoxLogo: View {
+    var size: CGFloat = 80
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.clawPrimary)
+                .frame(width: size * 0.9, height: size * 0.9)
+                .blur(radius: size * 0.25)
+                .opacity(0.4)
+            
+            RoundedRectangle(cornerRadius: size * 0.22)
+                .fill(Color.clawSurface)
+                .frame(width: size, height: size)
+                .overlay(RoundedRectangle(cornerRadius: size * 0.22).stroke(Color.clawPrimary.opacity(0.3), lineWidth: 1.5))
+            
+            Image(systemName: "key.fill")
+                .font(.system(size: size * 0.4, weight: .medium))
+                .foregroundStyle(Color.clawGradient)
+                .rotationEffect(.degrees(-45))
+        }
+    }
+}
+
+// MARK: - Views
 
 struct ContentView: View {
     @EnvironmentObject var vaultManager: VaultManager
@@ -38,30 +153,22 @@ struct InitializeView: View {
     
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                colors: [Color(hex: "1a1a2e"), Color(hex: "16213e")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Background - adaptive
+            Color.clawBackground
+                .ignoresSafeArea()
             
             VStack(spacing: 32) {
-                // Logo
+                // Logo - Gold Key
                 VStack(spacing: 16) {
-                    Image(systemName: "lock.shield.fill")
-                        .font(.system(size: 80))
-                        .foregroundStyle(
-                            LinearGradient(colors: [.cyan, .blue], startPoint: .top, endPoint: .bottom)
-                        )
+                    ClawBoxLogo(size: 100)
                     
                     Text("ClawBox")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                        .foregroundColor(.clawText)
                     
                     Text("AI-Native Secret Manager")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.clawTextSecondary)
                 }
                 
                 // Form
@@ -69,7 +176,7 @@ struct InitializeView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Create Master Password")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(.clawText)
                         
                         SecureField("", text: $password)
                             .textFieldStyle(ModernTextFieldStyle())
@@ -79,7 +186,7 @@ struct InitializeView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Confirm Password")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(.clawText)
                         
                         SecureField("", text: $confirmPassword)
                             .textFieldStyle(ModernTextFieldStyle())
@@ -88,7 +195,7 @@ struct InitializeView: View {
                     
                     if let error = errorMessage {
                         Text(error)
-                            .foregroundColor(.red)
+                            .foregroundColor(.clawAccent)
                             .font(.caption)
                     }
                     
@@ -104,7 +211,7 @@ struct InitializeView: View {
                         }
                         .frame(width: 320, height: 44)
                     }
-                    .buttonStyle(ModernButtonStyle())
+                    .buttonStyle(ModernPrimaryButtonStyle())
                     .disabled(password.isEmpty || password != confirmPassword || isLoading)
                 }
             }
@@ -142,27 +249,21 @@ struct UnlockView: View {
     
     var body: some View {
         ZStack {
-            // Background
-            LinearGradient(
-                colors: [Color(hex: "1a1a2e"), Color(hex: "16213e")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Background - adaptive
+            Color.clawBackground
+                .ignoresSafeArea()
             
             VStack(spacing: 32) {
-                // Logo
+                // Logo - Gold Key
                 VStack(spacing: 16) {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.cyan)
+                    ClawBoxLogo(size: 80)
                     
                     Text("ClawBox")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                        .foregroundColor(.clawText)
                     
                     Text("Vault is locked")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.clawTextSecondary)
                 }
                 
                 // Unlock form
@@ -177,11 +278,11 @@ struct UnlockView: View {
                             }
                             .frame(width: 320, height: 44)
                         }
-                        .buttonStyle(ModernButtonStyle())
+                        .buttonStyle(ModernPrimaryButtonStyle())
                         .disabled(isLoading)
                         
                         Text("or enter password")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.clawTextSecondary)
                             .font(.caption)
                     }
                     
@@ -192,7 +293,7 @@ struct UnlockView: View {
                     
                     if let error = errorMessage {
                         Text(error)
-                            .foregroundColor(.red)
+                            .foregroundColor(.clawAccent)
                             .font(.caption)
                     }
                     
@@ -766,71 +867,7 @@ struct ErrorView: View {
     }
 }
 
-// MARK: - Custom Styles
-
-struct ModernTextFieldStyle: TextFieldStyle {
-    func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding(12)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(10)
-            .foregroundColor(.white)
-    }
-}
-
-struct ModernButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background(
-                LinearGradient(colors: [.cyan, .blue], startPoint: .leading, endPoint: .trailing)
-            )
-            .foregroundColor(.white)
-            .cornerRadius(10)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-    }
-}
-
-struct ModernSecondaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background(Color.white.opacity(0.1))
-            .foregroundColor(.white)
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-            )
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-    }
-}
-
-// MARK: - Color Extension
-
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
-        }
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-}
+// Styles defined in Theme.swift
 
 #Preview {
     ContentView()

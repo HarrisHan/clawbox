@@ -67,6 +67,7 @@ class AutoLockService: ObservableObject {
     /// Start monitoring with lock callback
     func start(onLock: @escaping () -> Void) {
         self.onLock = onLock
+        lastActivity = Date()  // Reset activity timestamp
         resetTimer()
     }
     

@@ -13,6 +13,14 @@ Cargo.lock
 .vscode/
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
+*.xcuserstate
+
+# Xcode build artifacts
+**/build/
+DerivedData/
+
+# Bundled CLI binaries (auto-generated during build)
+**/Resources/clawbox
 
 # Build artifacts
 *.o
