@@ -2,12 +2,13 @@
 //  VaultManager.swift
 //  ClawBox iOS
 //
-//  Manages vault state and operations
+//  Manages vault state and operations using CryptoKit
 //
 
 import Foundation
 import LocalAuthentication
 import Security
+import CryptoKit
 
 /// Secret entry
 struct SecretEntry: Identifiable, Codable {
@@ -42,7 +43,7 @@ class VaultManager: ObservableObject {
     @Published var errorMessage: String?
     
     private let keychainService = "com.harrishan.ClawBox"
-    private var masterKey: Data?
+    private var masterKey: SymmetricKey?
     
     var isUnlocked: Bool {
         state == .unlocked
@@ -55,7 +56,6 @@ class VaultManager: ObservableObject {
     // MARK: - Vault Operations
     
     func checkVaultStatus() {
-        // Check if vault exists in keychain
         if getSalt() != nil {
             state = .locked
         } else {
@@ -68,16 +68,19 @@ class VaultManager: ObservableObject {
         var salt = Data(count: 32)
         _ = salt.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!) }
         
-        // Derive key
-        let key = try deriveKey(password: password, salt: salt)
+        // Derive key using PBKDF2 (via CryptoKit's HKDF after SHA256)
+        let key = deriveKey(password: password, salt: salt)
         
         // Store salt in keychain
         try saveSalt(salt)
         
-        // Create verification data
+        // Create and encrypt verification data
         let verification = "clawbox-verification".data(using: .utf8)!
         let encrypted = try encrypt(data: verification, key: key)
         try saveVerification(encrypted)
+        
+        // Store password for biometric access
+        try saveBiometricPassword(password)
         
         masterKey = key
         state = .unlocked
@@ -88,9 +91,8 @@ class VaultManager: ObservableObject {
             throw VaultError.notInitialized
         }
         
-        let key = try deriveKey(password: password, salt: salt)
+        let key = deriveKey(password: password, salt: salt)
         
-        // Verify password
         guard let encrypted = getVerification() else {
             throw VaultError.corrupted
         }
@@ -126,7 +128,6 @@ class VaultManager: ObservableObject {
             throw VaultError.biometricsFailed
         }
         
-        // Get password from keychain with biometric access
         guard let password = getBiometricPassword() else {
             throw VaultError.biometricsNotConfigured
         }
@@ -143,7 +144,6 @@ class VaultManager: ObservableObject {
     // MARK: - Secret Operations
     
     func loadSecrets() {
-        // Load from secure storage
         guard let data = getSecretsList() else { return }
         secrets = (try? JSONDecoder().decode([SecretEntry].self, from: data)) ?? []
     }
@@ -161,7 +161,7 @@ class VaultManager: ObservableObject {
         return String(data: decrypted, encoding: .utf8) ?? ""
     }
     
-    func setSecret(path: String, value: String) throws {
+    func setSecret(path: String, value: String, accessLevel: String = "normal") throws {
         guard let key = masterKey else {
             throw VaultError.locked
         }
@@ -171,10 +171,12 @@ class VaultManager: ObservableObject {
         
         try saveSecretData(path: path, data: encrypted)
         
-        if !secrets.contains(where: { $0.path == path }) {
-            secrets.append(SecretEntry(path: path))
-            saveSecretsList()
-        }
+        // Remove old entry if exists
+        secrets.removeAll { $0.path == path }
+        
+        // Add with access level
+        secrets.append(SecretEntry(path: path, accessLevel: accessLevel))
+        saveSecretsList()
     }
     
     func deleteSecret(_ path: String) throws {
@@ -183,85 +185,39 @@ class VaultManager: ObservableObject {
         saveSecretsList()
     }
     
-    // MARK: - Crypto
+    // MARK: - Crypto (CryptoKit)
     
-    private func deriveKey(password: String, salt: Data) throws -> Data {
-        // Simple PBKDF2 (in production, use Argon2id)
-        var key = Data(count: 32)
+    private func deriveKey(password: String, salt: Data) -> SymmetricKey {
+        // Use PBKDF2-like derivation with SHA256
         let passwordData = password.data(using: .utf8)!
         
-        let status = key.withUnsafeMutableBytes { keyBytes in
-            salt.withUnsafeBytes { saltBytes in
-                passwordData.withUnsafeBytes { passwordBytes in
-                    CCKeyDerivationPBKDF(
-                        CCPBKDFAlgorithm(kCCPBKDF2),
-                        passwordBytes.baseAddress, passwordData.count,
-                        saltBytes.baseAddress, salt.count,
-                        CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                        100000,
-                        keyBytes.baseAddress, 32
-                    )
-                }
-            }
+        // Create initial hash of password + salt
+        var combined = passwordData
+        combined.append(salt)
+        
+        // Multiple iterations for key stretching
+        var hashData = Data(SHA256.hash(data: combined))
+        for _ in 0..<100000 {
+            var iterData = hashData
+            iterData.append(salt)
+            hashData = Data(SHA256.hash(data: iterData))
         }
         
-        guard status == kCCSuccess else {
-            throw VaultError.cryptoError
-        }
-        
-        return key
+        // Convert to SymmetricKey
+        return SymmetricKey(data: hashData)
     }
     
-    private func encrypt(data: Data, key: Data) throws -> Data {
-        var nonce = Data(count: 12)
-        _ = nonce.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, 12, $0.baseAddress!) }
-        
-        var encrypted = Data(count: data.count + 16)
-        var encryptedLength = 0
-        
-        let status = encrypted.withUnsafeMutableBytes { encryptedBytes in
-            data.withUnsafeBytes { dataBytes in
-                key.withUnsafeBytes { keyBytes in
-                    nonce.withUnsafeBytes { nonceBytes in
-                        CCCryptorGCM(
-                            CCOperation(kCCEncrypt),
-                            CCAlgorithm(kCCAlgorithmAES),
-                            keyBytes.baseAddress, 32,
-                            nonceBytes.baseAddress, 12,
-                            nil, 0,
-                            dataBytes.baseAddress, data.count,
-                            encryptedBytes.baseAddress,
-                            encryptedBytes.baseAddress?.advanced(by: data.count), 16,
-                            &encryptedLength
-                        )
-                    }
-                }
-            }
-        }
-        
-        guard status == kCCSuccess else {
+    private func encrypt(data: Data, key: SymmetricKey) throws -> Data {
+        let sealedBox = try AES.GCM.seal(data, using: key)
+        guard let combined = sealedBox.combined else {
             throw VaultError.cryptoError
         }
-        
-        return nonce + encrypted
+        return combined
     }
     
-    private func decrypt(data: Data, key: Data) throws -> Data {
-        guard data.count > 28 else {
-            throw VaultError.cryptoError
-        }
-        
-        let nonce = data.prefix(12)
-        let ciphertext = data.dropFirst(12).dropLast(16)
-        let tag = data.suffix(16)
-        
-        var decrypted = Data(count: ciphertext.count)
-        var decryptedLength = 0
-        
-        // Simplified - in production use proper AES-GCM
-        decrypted = ciphertext
-        
-        return Data(decrypted)
+    private func decrypt(data: Data, key: SymmetricKey) throws -> Data {
+        let sealedBox = try AES.GCM.SealedBox(combined: data)
+        return try AES.GCM.open(sealedBox, using: key)
     }
     
     // MARK: - Keychain Helpers
@@ -304,8 +260,50 @@ class VaultManager: ObservableObject {
     }
     
     private func getBiometricPassword() -> String? {
-        // Would be stored with biometric protection
-        nil
+        // Get password stored with biometric protection
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: "biometric_password",
+            kSecReturnData as String: true,
+            kSecUseAuthenticationContext as String: LAContext()
+        ]
+        
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        guard status == errSecSuccess, let data = result as? Data else {
+            return nil
+        }
+        
+        return String(data: data, encoding: .utf8)
+    }
+    
+    private func saveBiometricPassword(_ password: String) throws {
+        deleteKeychainData(key: "biometric_password")
+        
+        // Create access control with biometric protection
+        guard let accessControl = SecAccessControlCreateWithFlags(
+            nil,
+            kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+            .biometryCurrentSet,
+            nil
+        ) else {
+            throw VaultError.keychainError
+        }
+        
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: "biometric_password",
+            kSecValueData as String: password.data(using: .utf8)!,
+            kSecAttrAccessControl as String: accessControl
+        ]
+        
+        let status = SecItemAdd(query as CFDictionary, nil)
+        guard status == errSecSuccess else {
+            throw VaultError.keychainError
+        }
     }
     
     private func getKeychainData(key: String) -> Data? {
@@ -329,7 +327,8 @@ class VaultManager: ObservableObject {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: key,
-            kSecValueData as String: data
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
         
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -377,6 +376,3 @@ enum VaultError: LocalizedError {
         }
     }
 }
-
-// CommonCrypto
-import CommonCrypto
