@@ -2,6 +2,8 @@
 //!
 //! Provides automatic sync across macOS/iOS devices via iCloud Drive.
 
+#![allow(unexpected_cfgs)]
+
 use crate::{crypto, Result, Error};
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -13,6 +15,7 @@ const ICLOUD_CONTAINER: &str = "iCloud~com~harrishan~ClawBox";
 /// Sync file names
 const VAULT_FILE: &str = "vault.encrypted";
 const META_FILE: &str = "vault.meta";
+#[allow(dead_code)]
 const LOCK_FILE: &str = "sync.lock";
 
 /// Sync metadata

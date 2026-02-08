@@ -5,7 +5,6 @@
 use crate::{Result, Error};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 /// Sync state for a vault
 #[derive(Debug, Clone, Serialize, Deserialize)]

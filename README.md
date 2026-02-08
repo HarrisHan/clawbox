@@ -27,6 +27,53 @@ curl -sSL https://get.clawbox.sh | sh
 brew install clawbox
 ```
 
+### Build from Source
+
+**Prerequisites:**
+- Rust 1.70+ (install from [rustup.rs](https://rustup.rs))
+- Xcode 15+ (for macOS/iOS apps)
+
+**Build CLI:**
+
+```bash
+# Clone repository
+git clone https://github.com/HarrisHan/clawbox.git
+cd clawbox
+
+# Build CLI
+cargo build --release
+
+# Install to ~/.cargo/bin
+cargo install --path crates/clawbox-cli
+
+# Or copy manually
+cp target/release/clawbox /usr/local/bin/
+```
+
+**Build macOS App:**
+
+```bash
+# 1. Build CLI first (required!)
+cargo build --release
+
+# 2. Open Xcode and build
+cd macos-app/ClawBox
+open ClawBox.xcodeproj
+
+# 3. Press Cmd+B to build
+#    The CLI binary will be automatically embedded from target/release/clawbox
+```
+
+**Build iOS App:**
+
+```bash
+cd ios-app/ClawBox
+open ClawBox.xcodeproj
+# Press Cmd+B to build
+```
+
+**Note:** macOS/iOS apps require the CLI to be built first. The build script automatically embeds the CLI binary from `target/release/clawbox` or `Resources/clawbox`.
+
 ### Basic Usage
 
 ```bash

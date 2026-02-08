@@ -7,7 +7,6 @@ use chrono::{DateTime, Utc};
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
-use std::collections::HashMap;
 
 /// Audit action types
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -259,24 +258,19 @@ impl<'a> AuditLogger<'a> {
         let mut stmt = self.conn.prepare(&sql)?;
         
         // Build params dynamically
-        let mut param_idx = 0;
         let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![];
         
         if let Some(ref path) = filter.key_path {
             params.push(Box::new(format!("%{}%", path)));
-            param_idx += 1;
         }
         if let Some(ref since) = filter.since {
             params.push(Box::new(since.timestamp()));
-            param_idx += 1;
         }
         if let Some(ref until) = filter.until {
             params.push(Box::new(until.timestamp()));
-            param_idx += 1;
         }
         if let Some(ref actor) = filter.actor_type {
             params.push(Box::new(format!("%\"actor_type\":\"{}%", actor)));
-            param_idx += 1;
         }
         if let Some(ref action) = filter.action {
             params.push(Box::new(action.as_str().to_string()));

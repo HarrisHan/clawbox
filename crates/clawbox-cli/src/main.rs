@@ -6,7 +6,6 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use clawbox_core::{AccessLevel, ClawBox, SetOptions};
 use console::style;
-use serde::{Deserialize, Serialize};
 use std::io::{self, BufRead};
 use std::path::PathBuf;
 
@@ -512,7 +511,7 @@ fn main() -> Result<()> {
 
         #[cfg(target_os = "macos")]
         Commands::Sync { push, pull, status } => {
-            use clawbox_core::icloud::{ICloudSync, SyncResult};
+            use clawbox_core::icloud::ICloudSync;
             
             let mut vault = ClawBox::open(&vault_path)?;
             let sync = ICloudSync::new(vault_path.clone());
